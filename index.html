@@ -30,7 +30,7 @@
             --error-bg-color: rgba(248, 113, 113, 0.1);
             --shadow-color: rgba(0, 0, 0, 0.2);
             --icon-color: #94a3b8;
-            --glow-color: rgba(34, 197, 94, 0.3); /* Sanfter grüner Glow */
+            --glow-color: rgba(255, 255, 255, 0.3); /* Sanfter weißer Glow */
         }
 
         /* BASE & FONTS */
@@ -41,8 +41,7 @@
             overflow: hidden; /* Verhindert Scrollbalken durch Animationen */
              /* DEIN NEUER SCHNEE-HINTERGRUND (radial-gradient) */
             background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
-            /* Weißer Glow-Effekt wieder auf dem Body */
-            filter: drop-shadow(0 0 10px white);
+            /* Weißer Glow-Effekt von hier ENTFERNT (war auf dem ganzen Body) */
         }
         
         h1, h2, h3, .font-display {
@@ -71,9 +70,9 @@
 
 
         /* CARD & LAYOUT */
-        /* Glow-Effekt von hier ENTFERNT */
+        /* Glow-Effekt hier REAKTIVIERT */
         #app-container {
-             /* filter: drop-shadow(0 0 15px var(--glow-color)); */
+             filter: drop-shadow(0 0 15px var(--glow-color));
              transition: filter 0.5s ease;
         }
         
@@ -106,7 +105,8 @@
         }
         .main-btn:hover {
             background-color: var(--accent-hover);
-            transform: translateY(-2px);
+            /* DESIGN-UPDATE: Pop-Effekt (Scale) hinzugefügt */
+            transform: translateY(-2px) scale(1.05); 
             box-shadow: 0 6px 20px -2px rgba(34, 197, 94, 0.3);
             animation: none; /* Puls stoppt bei Hover */
         }
@@ -210,7 +210,7 @@
     <header class="fixed top-4 left-4 right-4 z-50 flex items-center justify-between">
         <!-- Left Side: Empty or Placeholder -->
         <div></div>
-    
+        
         <!-- Right Side: Theme Toggle & Logo -->
         <div class="flex items-center gap-4">
             <!-- Theme-Toggle-Button entfernt -->
@@ -227,17 +227,17 @@
         <!-- Glass Card für Wichtel-Lotterie -->
         <div class="glass-card rounded-2xl w-full p-8 md:p-12 text-center">
             
-            <!-- Anschauliches Icon -->
-            <div class="w-16 h-16 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center mx-auto mb-6">
+            <!-- DESIGN-UPDATE: Anschauliches Icon (lebendiger) -->
+            <div class="w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-600 text-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-green-500/30">
                 <i data-lucide="gift" class="w-8 h-8"></i>
             </div>
             
             <h1 class="font-display text-4xl md:text-5xl font-bold mb-3 shimmer-h1">Wichteln 2025</h1>
             <!-- Textfarbe für Lesbarkeit geändert -->
-            <p class="text-lg mb-8" style="color: var(--text-primary);">Ziehe deine einzigartige Nummer von 1 bis 63.</p>
+            <p class="text-lg mb-8" style="color: var(--text-secondary);">Ziehe deine einzigartige Geschenke- Nummer.</p>
             
-            <!-- Container für dynamische Inhalte (Button, Lader, Ergebnis) -->
-            <div class="h-48 flex justify-center items-center relative">
+            <!-- DESIGN-UPDATE: Container für dynamische Inhalte (min-h statt h-48 und flex-col) -->
+            <div class="min-h-[12rem] flex flex-col justify-center items-center relative">
 
                 <!-- Lade-Spinner (standardmäßig versteckt) -->
                 <div id="loading" class="hidden my-8 flex justify-center">
@@ -248,7 +248,8 @@
                 <!-- Ergebnis-Anzeige (standardmäßig versteckt) -->
                 <div id="result" class="hidden my-8">
                     <p class="text-lg" style="color: var(--text-secondary);">Deine gezogene Wichtel-Nummer ist:</p>
-                    <p id="numberDisplay" class="text-7xl font-extrabold my-4" style="color: var(--accent-color);">--</p>
+                    <!-- DESIGN-UPDATE: Leichter Glow-Effekt für die Zahl -->
+                    <p id="numberDisplay" class="text-7xl font-extrabold my-4" style="color: var(--accent-color); text-shadow: 0 0 15px var(--glow-color);">--</p>
                     <p class="text-sm" style="color: var(--text-secondary);">Bitte merke dir diese Nummer gut!</p>
                 </div>
 
@@ -258,7 +259,10 @@
                 </div>
 
                 <!-- Button (ersetzt das Geschenk) -->
-                 <button id="drawButton" class="main-btn hidden text-white font-bold py-3 px-6 rounded-lg shadow-md transition-colors duration-200 text-lg focus:outline-none focus:ring-2 focus:ring-opacity-50" style="color: white; --accent-color: var(--accent-color); --accent-hover: var(--accent-hover); --ring-color: var(--accent-color);">
+                 <!-- DESIGN-UPDATE: Icon zum Button hinzugefügt und flex-Layout -->
+                <button id="drawButton" class="main-btn hidden text-white font-bold py-3 px-6 rounded-lg shadow-md transition-colors duration-200 text-lg focus:outline-none focus:ring-2 focus:ring-opacity-50 flex items-center justify-center" style="color: white; --accent-color: var(--accent-color); --accent-hover: var(--accent-hover); --ring-color: var(--accent-color);">
+                    <!-- Icon hinzugefügt (mt-px für leichte vertikale Anpassung) -->
+                    <i data-lucide="gift" class="w-5 h-5 -mt-px mr-2"></i>
                     Jetzt meine Nummer ziehen!
                 </button>
                 
@@ -591,5 +595,4 @@
     </script>
 </body>
 </html>
-
 
