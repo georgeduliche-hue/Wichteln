@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="de" class="h-full bg-gray-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wichtel-Lotterie</title>
+    <!-- Lädt Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Einfache Lade-Spinner-Animation */
+        .spinner {
+            border-top-color: #3498db;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center h-full font-sans text-gray-800 p-4">
+
+    <!-- Hauptcontainer -->
+    <div id="app" class="w-full max-w-md bg-white rounded-lg shadow-xl p-8 text-center">
+        
+        <h1 class="text-3xl font-bold text-gray-900 mb-4">Wichtel-Lotterie</h1>
+        <p class="text-gray-600 mb-8">Scanne den QR-Code, um deine einzigartige Nummer von 1 bis 63 zu ziehen.</p>
+
+        <!-- Lade-Spinner (standardmäßig versteckt) -->
+        <div id="loading" class="hidden my-8 flex justify-center">
+            <div class="spinner w-16 h-16 border-4 border-gray-200 rounded-full"></div>
+            <p class="sr-only">Laden...</p>
+        </div>
+
+        <!-- Ergebnis-Anzeige (standardmäßig versteckt) -->
+        <div id="result" class="hidden my-8">
+            <p class="text-lg text-gray-700">Deine gezogene Wichtel-Nummer ist:</p>
+            <p id="numberDisplay" class="text-7xl font-extrabold text-blue-600 my-4">--</p>
+            <p class="text-sm text-gray-500">Bitte merke dir diese Nummer gut!</p>
+        </div>
+
+        <!-- Fehler-Anzeige (standardmäßig versteckt) -->
+        <div id="error" class="hidden my-8 p-4 bg-red-100 text-red-700 rounded-lg">
+            <p id="errorMessage"></p>
+        </div>
+
+        <!-- Button zum Ziehen (standardmäßig angezeigt) -->
+        <button id="drawButton" class_name="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-200 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+            Jetzt meine Nummer ziehen!
+        </button>
+
+        <!-- Admin-Bereich zum Initialisieren/Zurücksetzen -->
+        <div class="mt-10 pt-6 border-t border-gray-200">
+            <p class="text-xs text-gray-500">Nur für Admins:</p>
+            <button id="initButton" class="mt-2 text-xs text-gray-600 bg-gray-100 px-3 py-1 rounded-md hover:bg-gray-200">
+                Lotterie Initialisieren / Zurücksetzen
+            </button>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        // Firebase Core SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        // Firebase Auth SDK (für die Benutzeranmeldung)
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        // Firebase Firestore SDK (für die Datenbank)
+        import { getFirestore, doc, getDoc, setDoc, runTransaction, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Globale Variablen (automatisch bereitgestellt) ---
+        // HIER SIND DIE ÄNDERUNGEN FÜR NETLIFY:
+        const firebaseConfig = {
+          apiKey: "AIzaSyAVAF3jzjP8harkNYYgZmIhbIHn5TZmAP0",
+          authDomain: "wichteln-603a8.firebaseapp.com",
+          projectId: "wichteln-603a8",
+          storageBucket: "wichteln-603a8.firebasestorage.app",
+          messagingSenderId: "119876319727",
+          appId: "1:119876319727:web:007e1aadbb1e7a59141e1a",
+          measurementId: "G-89T75W5MTZ"
+        };
+        const appId = 'wichteln-603a8'; // Festgelegt für Netlify
+        const initialAuthToken = null; // Nicht benötigt für Netlify
+        
+        // --- UI-Elemente ---
+        const appDiv = document.getElementById('app');
+        const loadingDiv = document.getElementById('loading');
+        const resultDiv = document.getElementById('result');
+        const errorDiv = document.getElementById('error');
+        const numberDisplay = document.getElementById('numberDisplay');
+        const errorMessage = document.getElementById('errorMessage');
+        const drawButton = document.getElementById('drawButton');
+        const initButton = document.getElementById('initButton');
+
+        let db, auth;
+        let userId;
+
+        // --- Datenbank-Pfad ---
+        // Pfad zum Dokument, das die verfügbaren Nummern speichert.
+        // Wir verwenden einen öffentlichen Pfad, damit alle Azubis darauf zugreifen können.
+        const DB_PATH_PREFIX = `/artifacts/${appId}/public/data/wichteln`;
+        const WICHTELN_DOC_REF = () => doc(db, DB_PATH_PREFIX, 'main');
+        const MAX_NUMBER = 63; // Maximale Anzahl an Nummern (1 bis 63)
+
+        /**
+         * Hauptfunktion: Initialisiert Firebase und prüft den Status des Benutzers.
+         */
+        async function main() {
+            if (!firebaseConfig.apiKey) {
+                showError("Firebase-Konfiguration fehlt. Die App kann nicht gestartet werden.");
+                return;
+            }
+
+            try {
+                // Firebase App initialisieren
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                // setLogLevel('debug'); // (Optional) Für Debugging in der Konsole
+
+                // Persistenz auf "local" setzen, damit der Benutzer angemeldet bleibt
+                await setPersistence(auth, browserLocalPersistence);
+
+                // Benutzer-Authentifizierung (Vereinfacht für Netlify)
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        // Benutzer ist angemeldet
+                        userId = user.uid;
+                        // console.log("Benutzer angemeldet:", userId);
+                        // Prüfen, ob der Benutzer bereits eine Nummer gezogen hat
+                        checkLocalStorage();
+                    } else {
+                        // Benutzer ist nicht angemeldet, anonym anmelden
+                        try {
+                            await signInAnonymously(auth);
+                        } catch (err) {
+                            console.error("Fehler bei signInAnonymously:", err);
+                            showError("Anmeldung fehlgeschlagen. Bitte Seite neu laden.");
+                        }
+                    }
+                });
+
+                // Event Listeners für die Buttons
+                drawButton.addEventListener('click', drawNumber);
+                initButton.addEventListener('click', initializeLottery);
+
+            } catch (err) {
+                console.error("Firebase-Initialisierungsfehler:", err);
+                showError("Ein kritischer Fehler ist aufgetreten.");
+            }
+        }
+
+        /**
+         * Prüft, ob der Benutzer diese Seite schonmal besucht und eine Nummer
+         * im lokalen Speicher seines Browsers gespeichert hat.
+         * Verhindert, dass derselbe Benutzer mehrmals zieht.
+         */
+        function checkLocalStorage() {
+            const storedNumber = localStorage.getItem(`wichtelNummer_${appId}`);
+            if (storedNumber) {
+                // Benutzer hat bereits eine Nummer, zeige sie direkt an
+                showResult(storedNumber);
+            } else {
+                // Benutzer hat noch keine Nummer, Button anzeigen
+                drawButton.classList.remove('hidden');
+            }
+        }
+
+        /**
+         * Startet den Zieh-Vorgang.
+         * Verwendet eine Firestore-Transaktion, um sicherzustellen, dass
+         * jede Nummer nur einmal gezogen wird (atomarer Vorgang).
+         */
+        async function drawNumber() {
+            if (!db) {
+                showError("Datenbank ist nicht verbunden.");
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                // Starte eine Transaktion
+                const drawnNumber = await runTransaction(db, async (transaction) => {
+                    const docRef = WICHTELN_DOC_REF();
+                    const docSnap = await transaction.get(docRef);
+
+                    if (!docSnap.exists() || !docSnap.data().availableNumbers) {
+                        // Sollte nicht passieren, wenn initialisiert wurde
+                        // Aber als Sicherheitsnetz erstellen wir das Array
+                        console.warn("Lotterie-Dokument nicht gefunden, erstelle neues...");
+                        const initialNumbers = Array.from({ length: MAX_NUMBER }, (_, i) => i + 1);
+                        // Nummer ziehen
+                        const randomIndex = Math.floor(Math.random() * initialNumbers.length);
+                        const number = initialNumbers.splice(randomIndex, 1)[0];
+                        // Transaktion aktualisieren
+                        transaction.set(docRef, { availableNumbers: initialNumbers });
+                        return number;
+                    }
+
+                    const data = docSnap.data();
+                    const availableNumbers = data.availableNumbers;
+
+                    if (availableNumbers.length === 0) {
+                        // Keine Nummern mehr verfügbar
+                        throw new Error("Alle Nummern sind bereits vergeben!");
+                    }
+
+                    // Eine zufällige Nummer aus dem Array ziehen
+                    const randomIndex = Math.floor(Math.random() * availableNumbers.length);
+                    const number = availableNumbers.splice(randomIndex, 1)[0]; // Entfernt die Nummer
+
+                    // Das aktualisierte Array (ohne die gezogene Nummer) zurück in die DB schreiben
+                    transaction.update(docRef, { availableNumbers: availableNumbers });
+
+                    // Die gezogene Nummer zurückgeben
+                    return number;
+                });
+
+                // Transaktion war erfolgreich
+                setLoading(false);
+                showResult(drawnNumber);
+                // Nummer im lokalen Speicher sichern, um Doppel-Ziehen zu verhindern
+                localStorage.setItem(`wichtelNummer_${appId}`, drawnNumber);
+
+            } catch (err) {
+                console.error("Fehler bei der Transaktion:", err);
+                setLoading(false);
+                if (err.message.includes("Alle Nummern")) {
+                    showError("Leider zu spät! Alle Wichtel-Nummern wurden bereits gezogen.");
+                } else {
+                    showError("Ein Fehler ist aufgetreten. Bitte versuche es erneut.");
+                }
+            }
+        }
+
+        /**
+         * (Admin-Funktion)
+         * Initialisiert die Lotterie. Erstellt ein Array mit allen Nummern
+         * von 1 bis MAX_NUMBER und speichert es in Firestore.
+         * Setzt eine bestehende Lotterie zurück.
+         */
+        async function initializeLottery() {
+            if (!db) {
+                showError("Datenbank ist nicht verbunden.");
+                return;
+            }
+
+            const confirmed = window.confirm("Bist du sicher? Dies setzt die gesamte Lotterie zurück und löscht alle bisher gezogenen Nummern!");
+            if (!confirmed) {
+                return;
+            }
+
+            setLoading(true);
+            try {
+                // Erstellt ein Array [1, 2, 3, ..., 63]
+                const initialNumbers = Array.from({ length: MAX_NUMBER }, (_, i) => i + 1);
+                
+                // Überschreibt das Dokument in der Datenbank
+                await setDoc(WICHTELN_DOC_REF(), {
+                    availableNumbers: initialNumbers
+                });
+
+                // Lokalen Speicher für diesen Benutzer löschen
+                localStorage.removeItem(`wichtelNummer_${appId}`);
+
+                setLoading(false);
+                // Seite neu laden, um den Zustand zurückzusetzen
+                window.location.reload();
+
+            } catch (err) {
+                console.error("Fehler beim Initialisieren:", err);
+                setLoading(false);
+                showError("Fehler beim Zurücksetzen der Lotterie.");
+            }
+        }
+
+        // --- UI-Hilfsfunktionen ---
+
+        function setLoading(isLoading) {
+            if (isLoading) {
+                loadingDiv.classList.remove('hidden');
+                drawButton.classList.add('hidden');
+                resultDiv.classList.add('hidden');
+                errorDiv.classList.add('hidden');
+            } else {
+                loadingDiv.classList.add('hidden');
+            }
+        }
+
+        function showResult(number) {
+            numberDisplay.textContent = number;
+            resultDiv.classList.remove('hidden');
+            drawButton.classList.add('hidden');
+            loadingDiv.classList.add('hidden');
+            errorDiv.classList.add('hidden');
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorDiv.classList.remove('hidden');
+            drawButton.classList.add('hidden'); // Button bei Fehler ausblenden
+            loadingDiv.classList.add('hidden');
+            resultDiv.classList.add('hidden');
+        }
+
+        // Start der Anwendung
+        main();
+
+    </script>
+</body>
+</html>
+
