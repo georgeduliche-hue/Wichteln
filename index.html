@@ -30,13 +30,6 @@
             --error-bg-color: rgba(248, 113, 113, 0.1);
             --shadow-color: rgba(0, 0, 0, 0.2);
             --icon-color: #94a3b8;
-            
-            /* Farben für das Geschenk */
-            --gift-box-color: #15803d; /* Green-700 */
-            --gift-lid-color: #22c55e; /* Green-500 */
-            --gift-bow-color: #ef4444; /* Red-500 */
-            --gift-shadow-color: rgba(0, 0, 0, 0.3);
-            --gift-highlight-color: rgba(255, 255, 255, 0.2);
         }
 
         /* BASE & FONTS */
@@ -47,7 +40,8 @@
             overflow: hidden; /* Verhindert Scrollbalken durch Animationen */
              /* DEIN NEUER SCHNEE-HINTERGRUND (radial-gradient) */
             background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
-            /* Filter (Glow) entfernt */
+            /* Filter (Glow) WIEDER HINZUGEFÜGT */
+            filter: drop-shadow(0 0 10px white);
         }
         
         h1, h2, h3, .font-display {
@@ -93,6 +87,25 @@
         }
         .secondary-btn:hover {
             color: var(--text-primary);
+        }
+        
+        /* Button-Stil (wieder hinzugefügt) */
+        .main-btn {
+            background-color: var(--accent-color);
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px -2px rgba(0,0,0,0.1);
+        }
+        .main-btn:hover {
+            background-color: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px -2px rgba(0,0,0,0.15);
+        }
+        .main-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
 
         /* LOADER ANIMATION */
@@ -141,7 +154,7 @@
         /* Animation für die gezogene Zahl */
         @keyframes popOutAndUp {
             0% { 
-                transform: translateY(200px) scale(0.3); /* Startet von unten (wo Geschenk war) */
+                transform: translateY(100px) scale(0.3); /* Startet von unten */
                 opacity: 0; 
             }
             60% { 
@@ -159,123 +172,7 @@
         }
 
         
-        /* --- START: 3D Geschenk-Animation --- */
-        .gift-container {
-            width: 150px;
-            height: 180px; /* Mehr Platz für Klick-Hinweis */
-            position: relative;
-            perspective: 800px;
-        }
-        
-        .gift {
-            width: 120px;
-            height: 120px;
-            position: relative;
-            transform-style: preserve-3d;
-            transform: rotateX(-10deg) rotateY(30deg); /* Isometrische Ansicht */
-            transition: transform 0.5s ease;
-            cursor: pointer;
-        }
-        .gift-container:hover .gift {
-             transform: rotateX(-10deg) rotateY(30deg) scale(1.05);
-        }
-
-        .gift-side {
-            position: absolute;
-            width: 120px;
-            height: 120px;
-            background-color: var(--gift-box-color);
-            border: 2px solid var(--text-primary);
-            box-shadow: inset 0 0 10px var(--gift-shadow-color);
-        }
-        
-        /* Box-Seiten */
-        .gift-box-front { transform: translateZ(60px); }
-        .gift-box-back { transform: translateZ(-60px) rotateY(180deg); }
-        .gift-box-left { transform: rotateY(-90deg) translateZ(60px); }
-        .gift-box-right { transform: rotateY(90deg) translateZ(60px); }
-        .gift-box-bottom { background-color: var(--gift-shadow-color); transform: rotateX(-90deg) translateZ(60px); }
-        
-        /* Deckel */
-        .gift-lid {
-            position: absolute;
-            width: 130px; /* Etwas größer als Box */
-            height: 130px;
-            top: -65px; /* Hälfte der Deckelhöhe */
-            left: -5px; /* Zentriert */
-            transform-style: preserve-3d;
-            z-index: 10;
-            transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-        }
-        .gift-lid-side {
-            position: absolute;
-            width: 130px;
-            height: 30px; /* Höhe des Deckelrands */
-            background-color: var(--gift-lid-color);
-            border: 2px solid var(--text-primary);
-        }
-        .gift-lid-top {
-            position: absolute;
-            width: 130px;
-            height: 130px;
-            background-color: var(--gift-lid-color);
-            border: 2px solid var(--text-primary);
-            transform: rotateX(90deg) translateZ(15px); /* Deckel obendrauf */
-            box-shadow: inset 0 0 10px var(--gift-highlight-color);
-        }
-        .gift-lid-front { transform: translateZ(65px); }
-        .gift-lid-back { transform: translateZ(-65px) rotateY(180deg); }
-        .gift-lid-left { transform: rotateY(-90deg) translateZ(65px); }
-        .gift-lid-right { transform: rotateY(90deg) translateZ(65px); }
-        
-        /* Schleifen */
-        .bow {
-            position: absolute;
-            background-color: var(--gift-bow-color);
-            border: 2px solid var(--text-primary);
-        }
-        /* Vertikale Schleife */
-        .bow-v-box { width: 30px; height: 100%; top: 0; left: 45px; transform: translateZ(61px); } /* Vorne */
-        .bow-v-left { width: 30px; height: 100%; top: 0; left: 45px; transform: rotateY(-90deg) translateZ(61px); } /* Links */
-        /* Horizontale Schleife (Deckel) */
-        .bow-h-top { width: 100%; height: 30px; top: 50px; left: 0; transform: rotateX(90deg) translateZ(16px); } /* Oben */
-        .bow-h-front { width: 100%; height: 30px; top: 0px; left: 0; transform: translateZ(66px); } /* Vorne (Deckel) */
-        .bow-h-left { width: 100%; height: 30px; top: 0px; left: 0; transform: rotateY(-90deg) translateZ(66px); } /* Links (Deckel) */
-        
-        /* Klick-Hinweis */
-        .click-hint {
-            position: absolute;
-            bottom: -5px; /* Unter der Box, weiter unten */
-            width: 100%;
-            text-align: center;
-            color: var(--text-secondary);
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            opacity: 0.7;
-            transition: opacity 0.3s ease;
-        }
-        .gift-container:hover .click-hint {
-            opacity: 1;
-            color: var(--text-primary);
-        }
-        
-        /* Öffnen-Animation */
-        .gift-container.open .gift-lid {
-            transform: translateY(-120px) rotateY(30deg) rotateX(30deg);
-        }
-        .gift-container.open .gift {
-            /* Box fällt leicht zusammen */
-            transform: rotateX(0deg) rotateY(0deg) scale(0.8);
-            opacity: 0;
-            transition: transform 0.5s ease, opacity 0.5s ease;
-        }
-        .gift-container.open .click-hint {
-            opacity: 0;
-        }
-        /* --- END: 3D Geschenk-Animation --- */
+        /* --- 3D Geschenk-Animation (ENTFERNT) --- */
 
     </style>
 </head>
@@ -310,7 +207,7 @@
             <h1 class="font-display text-4xl md:text-5xl font-bold mb-3 shimmer-h1">Wichtel-Lotterie</h1>
             <p class="text-lg mb-8" style="color: var(--text-secondary);">Ziehe deine einzigartige Nummer von 1 bis 63.</p>
             
-            <!-- Container für dynamische Inhalte (Geschenk, Lader, Ergebnis) -->
+            <!-- Container für dynamische Inhalte (Button, Lader, Ergebnis) -->
             <div class="h-48 flex justify-center items-center relative">
 
                 <!-- Lade-Spinner (standardmäßig versteckt) -->
@@ -331,42 +228,11 @@
                     <p id="errorMessage"></p>
                 </div>
 
-                <!-- Animiertes 3D-Geschenk (ersetzt den Button) -->
-                <div id="drawGiftContainer" class="gift-container hidden" role="button" aria-label="Nummer ziehen">
-                    <div class="gift">
-                        <!-- Deckel -->
-                        <div class="gift-lid">
-                            <div class="gift-lid-top">
-                                <div class="bow bow-h-top"></div>
-                            </div>
-                            <div class="gift-lid-side gift-lid-front">
-                                <div class="bow bow-h-front"></div>
-                            </div>
-                            <div class="gift-lid-side gift-lid-back"></div>
-                            <div class="gift-lid-side gift-lid-left">
-                                <div class="bow bow-h-left"></div>
-                            </div>
-                            <div class="gift-lid-side gift-lid-right"></div>
-                        </div>
-                        
-                        <!-- Box -->
-                        <div class="gift-side gift-box-front">
-                            <div class="bow bow-v-box"></div>
-                        </div>
-                        <div class="gift-side gift-box-back"></div>
-                        <div class="gift-side gift-box-left">
-                             <div class="bow bow-v-left"></div>
-                        </div>
-                        <div class="gift-side gift-box-right"></div>
-                        <div class="gift-side gift-box-bottom"></div>
-                    </div>
-                    
-                    <!-- "Klicken" Text (weiter unten) -->
-                    <div class="click-hint">
-                        <i data-lucide="hand-metal" class="w-5 h-5"></i>
-                        <span>Klicken zum Öffnen</span>
-                    </div>
-                </div>
+                <!-- Button (ersetzt das Geschenk) -->
+                 <button id="drawButton" class="main-btn hidden text-white font-bold py-3 px-6 rounded-lg shadow-md transition-colors duration-200 text-lg focus:outline-none focus:ring-2 focus:ring-opacity-50" style="color: white; --accent-color: var(--accent-color); --accent-hover: var(--accent-hover); --ring-color: var(--accent-color);">
+                    Jetzt meine Nummer ziehen!
+                </button>
+                
             </div> <!-- Ende dynamischer Container -->
             
             <!-- Admin-Bereich (Neues Design) - ID 'adminSection' hinzugefügt -->
@@ -408,7 +274,7 @@
         const errorDiv = document.getElementById('error');
         const numberDisplay = document.getElementById('numberDisplay');
         const errorMessage = document.getElementById('errorMessage');
-        const drawGiftContainer = document.getElementById('drawGiftContainer'); // Geändert
+        const drawButton = document.getElementById('drawButton'); // Geändert
         const initButton = document.getElementById('initButton');
         const adminSection = document.getElementById('adminSection');
 
@@ -457,7 +323,7 @@
                 });
 
                 // Event Listeners für die Buttons
-                drawGiftContainer.addEventListener('click', onGiftClick); // Geändert
+                drawButton.addEventListener('click', drawNumber); // Geändert
                 initButton.addEventListener('click', initializeLottery);
 
             } catch (err) {
@@ -467,29 +333,8 @@
         }
         
         /**
-         * NEU: Startet die Geschenk-Animation und dann die Ziehung.
+         * Geschenk-Click-Handler (ENTFERNT)
          */
-        function onGiftClick() {
-            // Verhindert Doppelklick, während Animation läuft
-            if (drawGiftContainer.classList.contains('open')) {
-                return; 
-            }
-            
-            // 1. Animation starten
-            drawGiftContainer.classList.add('open');
-            
-            // 2. Nach der Deckel-Animation die Nummer ziehen
-            setTimeout(() => {
-                // 3. Lade-Spinner anzeigen (versteckt das Geschenk)
-                setLoading(true); 
-                
-                // 4. Nummer in der Datenbank ziehen (verzögert, um Ladespinner zu zeigen)
-                setTimeout(() => {
-                    drawNumber(); // Die eigentliche Firebase-Funktion
-                }, 500); // Kurze Pause, damit der Spinner sichtbar ist
-                
-            }, 600); // Muss zur CSS-Animationsdauer passen (0.6s)
-        }
 
 
         /**
@@ -498,9 +343,9 @@
         function checkLocalStorage() {
             const storedNumber = localStorage.getItem(`wichtelNummer_${appId}`);
             if (storedNumber) {
-                showResult(storedNumber); // Versteckt automatisch das Geschenk
+                showResult(storedNumber); // Versteckt automatisch den Button
             } else {
-                drawGiftContainer.classList.remove('hidden'); // Zeigt das Geschenk
+                drawButton.classList.remove('hidden'); // Zeigt den Button
             }
         }
 
@@ -512,7 +357,7 @@
                 showError("Datenbank ist nicht verbunden.");
                 return;
             }
-            // setLoading(true) wurde nach onGiftClick verschoben
+            setLoading(true); // Wieder hierher verschoben
 
             try {
                 // Starte eine Transaktion
@@ -611,7 +456,7 @@
 
         function setLoading(isLoading) {
             loadingDiv.classList.toggle('hidden', !isLoading);
-            drawGiftContainer.classList.toggle('hidden', isLoading); // Geschenk bei Laden ausblenden
+            drawButton.classList.toggle('hidden', isLoading); // Button bei Laden ausblenden
             resultDiv.classList.add('hidden');
             errorDiv.classList.add('hidden');
             if(isLoading) initClickCount = 0; // Zähler bei Ladevorgang zurücksetzen
@@ -620,18 +465,19 @@
         function showResult(number, animate = false) {
             numberDisplay.textContent = number;
             if(animate) {
-                resultDiv.classList.add('pop-out'); // NEUE Animation "popOutAndUp"
+                resultDiv.classList.add('pop-out'); // Animation "popOutAndUp"
             }
             resultDiv.classList.remove('hidden');
-            drawGiftContainer.classList.add('hidden'); // Geschenk bei Ergebnis ausblenden
+            drawButton.classList.add('hidden'); // Button bei Ergebnis ausblenden
             loadingDiv.classList.add('hidden');
             errorDiv.classList.add('hidden');
         }
 
+
         function showError(message) {
             errorMessage.textContent = message;
             errorDiv.classList.remove('hidden');
-            drawGiftContainer.classList.add('hidden'); // Geschenk bei Fehler ausblenden
+            drawButton.classList.add('hidden'); // Button bei Fehler ausblenden
             loadingDiv.classList.add('hidden');
             resultDiv.classList.add('hidden');
             
@@ -639,8 +485,7 @@
             if (!message.startsWith("Admin:")) {
                  setTimeout(() => {
                     if (localStorage.getItem(`wichtelNummer_${appId}`) == null) {
-                        drawGiftContainer.classList.remove('hidden'); // Geschenk wieder anzeigen
-                        drawGiftContainer.classList.remove('open'); // Animations-Reset
+                        drawButton.classList.remove('hidden'); // Button wieder anzeigen
                         errorDiv.classList.add('hidden');
                     }
                  }, 3000);
