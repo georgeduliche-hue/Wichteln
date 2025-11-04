@@ -39,9 +39,8 @@
             font-family: 'Inter', sans-serif;
             transition: background-color 0.5s ease, color 0.5s ease;
             overflow: hidden; /* Verhindert Scrollbalken durch Animationen */
-             /* DEIN NEUER SCHNEE-HINTERGRUND (radial-gradient) */
+            /* DEIN NEUER SCHNEE-HINTERGRUND (radial-gradient) */
             background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
-            /* Weißer Glow-Effekt von hier ENTFERNT (war auf dem ganzen Body) */
         }
         
         h1, h2, h3, .font-display {
@@ -286,19 +285,29 @@
         // Firebase Auth SDK (für die Benutzeranmeldung)
         import { getAuth, signInAnonymously, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         // Firebase Firestore SDK (für die Datenbank)
-        import { getFirestore, doc, setDoc, runTransaction, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { 
+            getFirestore, 
+            doc, 
+            runTransaction, 
+            setLogLevel,
+            collection,
+            query,
+            where,
+            getDocs,
+            writeBatch
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Konfiguration für Netlify ---
         // DEINE FIREBASE-KONFIGURATION
        const firebaseConfig = {
-  apiKey: "AIzaSyAVAF3jzjP8harkNYYgZmIhbIHn5TZmAP0",
-  authDomain: "wichteln-603a8.firebaseapp.com",
-  projectId: "wichteln-603a8",
-  storageBucket: "wichteln-603a8.firebasestorage.app",
-  messagingSenderId: "119876319727",
-  appId: "1:119876319727:web:007e1aadbb1e7a59141e1a",
-  measurementId: "G-89T75W5MTZ"
-};
+         apiKey: "AIzaSyAVAF3jzjP8harkNYYgZmIhbIHn5TZmAP0",
+         authDomain: "wichteln-603a8.firebaseapp.com",
+         projectId: "wichteln-603a8",
+         storageBucket: "wichteln-603a8.firebasestorage.app",
+         messagingSenderId: "119876319727",
+         appId: "1:119876319727:web:007e1aadbb1e7a59141e1a",
+         measurementId: "G-89T75W5MTZ"
+       };
         const appId = 'wichteln-603a8'; // Festgelegt für Netlify
 
         // --- UI-Elemente ---
@@ -315,8 +324,8 @@
         let userId;
         let initClickCount = 0; // Für Admin-Doppelklick-Bestätigung
 
-        // --- Datenbank-Pfad (Für Netlify vereinfacht) ---
-        const WICHTELN_DOC_REF = () => doc(db, 'wichteln', 'main');
+        // --- Datenbank-Pfade (NEUE SKALIERBARE STRUKTUR) ---
+        const NUMBERS_COLLECTION_REF = () => collection(db, 'wichtelNumbers');
         const MAX_NUMBER = 63; // Maximale Anzahl an Nummern (1 bis 63)
 
         /**
@@ -366,11 +375,6 @@
         }
         
         /**
-         * Geschenk-Click-Handler (ENTFERNT)
-         */
-
-
-        /**
          * Prüft, ob der Benutzer bereits eine Nummer im lokalen Speicher hat.
          */
         function checkLocalStorage() {
@@ -383,54 +387,80 @@
         }
 
         /**
-         * Startet den Zieh-Vorgang (Firestore-Transaktion).
+         * (NEU) Startet den Zieh-Vorgang (Skalierbare Sharding-Methode).
          */
         async function drawNumber() {
-            if (!db) {
-                showError("Datenbank ist nicht verbunden.");
+            if (!db || !userId) {
+                showError("Datenbank ist nicht verbunden oder Benutzer nicht angemeldet.");
                 return;
             }
-            setLoading(true); // Wieder hierher verschoben
+            setLoading(true);
 
             try {
-                // Starte eine Transaktion
-                const drawnNumber = await runTransaction(db, async (transaction) => {
-                    const docRef = WICHTELN_DOC_REF();
-                    const docSnap = await transaction.get(docRef);
+                // 1. Finde ALLE freien Nummern (nur Lesezugriff, kein Hotspot)
+                const numbersCollection = NUMBERS_COLLECTION_REF();
+                const q = query(numbersCollection, where("drawn", "==", false));
+                const querySnapshot = await getDocs(q);
 
-                    if (!docSnap.exists() || !docSnap.data().availableNumbers) {
-                        // Sicherheitsnetz, falls nicht initialisiert
-                        console.warn("Lotterie-Dokument nicht gefunden, erstelle neues...");
-                        const initialNumbers = Array.from({ length: MAX_NUMBER }, (_, i) => i + 1);
-                        const randomIndex = Math.floor(Math.random() * initialNumbers.length);
-                        const number = initialNumbers.splice(randomIndex, 1)[0];
-                        transaction.set(docRef, { availableNumbers: initialNumbers });
-                        return number;
+                if (querySnapshot.empty) {
+                    throw new Error("Alle Nummern sind bereits vergeben!");
+                }
+
+                // 2. Mische die verfügbaren Dokumente lokal
+                // Wichtig, damit nicht alle 63 User das gleiche Dokument probieren
+                const availableDocs = querySnapshot.docs;
+                availableDocs.sort(() => Math.random() - 0.5);
+
+                let drawnNumber = null;
+
+                // 3. Versuche, die Dokumente nacheinander zu "beanspruchen" (claim)
+                for (const docSnap of availableDocs) {
+                    try {
+                        // Wir verwenden eine Transaktion, um *dieses eine Dokument* zu beanspruchen
+                        // Dies ist ein minimaler Schreibzugriff und erzeugt keinen Hotspot.
+                        await runTransaction(db, async (transaction) => {
+                            const freshDoc = await transaction.get(docSnap.ref);
+                            
+                            if (freshDoc.data().drawn === true) {
+                                // Jemand war schneller bei DIESER Nummer.
+                                // Wir werfen einen Fehler, damit die Schleife die nächste Nr. probiert.
+                                throw new Error("Nummer bereits vergeben, probiere nächste.");
+                            }
+                            
+                            // Wir haben es! Wir beanspruchen diese Nummer.
+                            transaction.update(docSnap.ref, { 
+                                drawn: true, 
+                                drawnBy: userId 
+                            });
+                            
+                            drawnNumber = freshDoc.data().number;
+                        });
+
+                        // Wenn die Transaktion erfolgreich war, haben wir eine Nummer
+                        if (drawnNumber) {
+                            break; // Verlasse die for-Schleife
+                        }
+
+                    } catch (transactionError) {
+                        // Diese Transaktion ist fehlgeschlagen (Kollision bei DIESER Nummer)
+                        // Das ist OK. Die Schleife wird automatisch die nächste versuchen.
+                        console.warn(`Kollision bei Nummer ${docSnap.id}, probiere nächste.`);
                     }
+                } // Ende der for-Schleife
 
-                    const data = docSnap.data();
-                    const availableNumbers = data.availableNumbers;
-
-                    if (availableNumbers.length === 0) {
-                        throw new Error("Alle Nummern sind bereits vergeben!");
-                    }
-
-                    // Eine zufällige Nummer aus dem Array ziehen
-                    const randomIndex = Math.floor(Math.random() * availableNumbers.length);
-                    const number = availableNumbers.splice(randomIndex, 1)[0]; // Entfernt die Nummer
-
-                    // Das aktualisierte Array zurückschreiben
-                    transaction.update(docRef, { availableNumbers: availableNumbers });
-                    return number;
-                });
-
-                // Transaktion war erfolgreich
-                setLoading(false);
-                showResult(drawnNumber, true); // true für Animation
-                localStorage.setItem(`wichtelNummer_${appId}`, drawnNumber);
+                if (drawnNumber) {
+                    // Erfolg!
+                    setLoading(false);
+                    showResult(drawnNumber, true); // true für Animation
+                    localStorage.setItem(`wichtelNummer_${appId}`, drawnNumber);
+                } else {
+                    // Sollte nur passieren, wenn alle Nummern vergeben sind,
+                    // während wir in der Schleife waren.
+                    throw new Error("Konnte keine freie Nummer finden (evtl. alle vergeben).");
+                }
 
             } catch (err) {
-                console.error("Fehler bei der Transaktion:", err);
+                console.error("Fehler beim Ziehen:", err);
                 setLoading(false);
                 if (err.message.includes("Alle Nummern")) {
                     showError("Leider zu spät! Alle Wichtel-Nummern wurden bereits gezogen.");
@@ -440,9 +470,10 @@
             }
         }
 
+
         /**
-         * (Admin-Funktion) Initialisiert die Lotterie.
-         * Erfordert jetzt einen Doppelklick zur Bestätigung.
+         * (NEU - Admin-Funktion) Initialisiert die Lotterie.
+         * Erstellt 63 einzelne Dokumente.
          */
         async function initializeLottery() {
             if (!db) {
@@ -464,19 +495,34 @@
             setLoading(true);
 
             try {
-                // Erstellt ein Array [1, 2, 3, ..., 63]
-                const initialNumbers = Array.from({ length: MAX_NUMBER }, (_, i) => i + 1);
-                
-                // Überschreibt das Dokument in der Datenbank
-                await setDoc(WICHTELN_DOC_REF(), {
-                    availableNumbers: initialNumbers
-                });
+                // (NEU) Wir verwenden einen Batch Write für Effizienz
+                const batch = writeBatch(db);
+                const numbersCollection = NUMBERS_COLLECTION_REF();
 
-                // Lokalen Speicher für diesen Benutzer löschen
+                // Erstellt 63 Dokumente (1 bis MAX_NUMBER)
+                for (let i = 1; i <= MAX_NUMBER; i++) {
+                    const numDocRef = doc(numbersCollection, String(i)); // ID '1', '2', ...
+                    const data = {
+                        number: i,
+                        drawn: false,
+                        drawnBy: null
+                    };
+                    batch.set(numDocRef, data);
+                }
+                
+                // (NEU) Führt alle Schreibvorgänge auf einmal aus
+                await batch.commit();
+
+                // Lokalen Speicher für diesen Benutzer löschen (falls vorhanden)
                 localStorage.removeItem(`wichtelNummer_${appId}`);
 
                 setLoading(false);
-                window.location.reload(); // Seite neu laden
+                // Erfolgsmeldung anzeigen, bevor neugeladen wird
+                showError("Lotterie erfolgreich zurückgesetzt! Seite wird neu geladen...");
+                setTimeout(() => {
+                    window.location.reload(); // Seite neu laden
+                }, 2000);
+
 
             } catch (err) {
                 console.error("Fehler beim Initialisieren:", err);
@@ -515,17 +561,15 @@
             resultDiv.classList.add('hidden');
             
             // Wenn es kein Admin-Reset-Fehler war, Button wieder anzeigen
-            if (!message.startsWith("Admin:")) {
+            if (!message.startsWith("Admin:") && !message.includes("erfolgreich zurückgesetzt")) {
                  setTimeout(() => {
-                    if (localStorage.getItem(`wichtelNummer_${appId}`) == null) {
-                        drawButton.classList.remove('hidden'); // Button wieder anzeigen
-                        errorDiv.classList.add('hidden');
-                    }
+                     if (localStorage.getItem(`wichtelNummer_${appId}`) == null) {
+                         drawButton.classList.remove('hidden'); // Button wieder anzeigen
+                         errorDiv.classList.add('hidden');
+                     }
                  }, 3000);
             }
         }
-
-        // --- Theme Toggle (ENTFERNT) ---
 
         // --- Admin Sektion per URL-Parameter einblenden ---
         function checkAdminMode() {
@@ -586,8 +630,6 @@
             }
         }
 
-        //test
-
         // --- Start der Anwendung ---
         checkAdminMode();
         main();
@@ -597,5 +639,3 @@
     </script>
 </body>
 </html>
-
-
