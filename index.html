@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wichtel-Lotterie</title>
+    <title>Wichteln 2025</title>
     
     <!-- Lädt Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -41,7 +41,8 @@
             overflow: hidden; /* Verhindert Scrollbalken durch Animationen */
              /* DEIN NEUER SCHNEE-HINTERGRUND (radial-gradient) */
             background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
-            /* Filter (Glow) von hier ENTFERNT */
+            /* Weißer Glow-Effekt wieder auf dem Body */
+            filter: drop-shadow(0 0 10px white);
         }
         
         h1, h2, h3, .font-display {
@@ -70,9 +71,9 @@
 
 
         /* CARD & LAYOUT */
-        /* Glow-Effekt HIERHER verschoben, nur auf den Main-Container */
+        /* Glow-Effekt von hier ENTFERNT */
         #app-container {
-             filter: drop-shadow(0 0 15px var(--glow-color));
+             /* filter: drop-shadow(0 0 15px var(--glow-color)); */
              transition: filter 0.5s ease;
         }
         
