@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de" class="h-full">
+<html lang="de" class="h-full dark-mode"> <!-- dark-mode standardmäßig aktiviert -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,28 +17,9 @@
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 
     <style>
-        /* THEME VARIABLES (Basis: Green) */
+        /* THEME VARIABLES (Nur noch Dark Mode) */
         :root {
-            --bg-color: #f0f4f8;
-            --card-bg-color: rgba(255, 255, 255, 0.85);
-            --text-primary: #1e293b;
-            --text-secondary: #475569;
-            --border-color: rgba(203, 213, 225, 0.5);
-            --accent-color: #16a34a; /* Green-600 */
-            --accent-hover: #15803d; /* Green-700 */
-            --error-color: #ef4444;
-            --error-bg-color: rgba(239, 68, 68, 0.1);
-            --aurora-1: #22c55e; /* Green-500 */
-            --aurora-2: #84cc16; /* Lime-500 */
-            --aurora-3: #4ade80; /* Green-400 */
-            --shadow-color: rgba(30, 41, 59, 0.1);
-            --icon-color: #64748b;
-        }
-
-        .dark-mode {
-            /* DEIN NEUER SCHNEE-HINTERGRUND */
             --bg-color: #090a0f; 
-            /* Fallback, falls radial-gradient nicht greift */
             --card-bg-color: rgba(22, 27, 34, 0.5);
             --text-primary: #e2e8f0;
             --text-secondary: #94a3b8;
@@ -47,65 +28,32 @@
             --accent-hover: #4ade80; /* Green-400 */
             --error-color: #f87171;
             --error-bg-color: rgba(248, 113, 113, 0.1);
-            --aurora-1: #16a34a; /* Green-600 */
-            --aurora-2: #15803d; /* Green-700 */
-            --aurora-3: #84cc16; /* Lime-500 */
             --shadow-color: rgba(0, 0, 0, 0.2);
             --icon-color: #94a3b8;
+            
+            /* Farben für das Geschenk */
+            --gift-box-color: var(--accent-hover); /* #15803d */
+            --gift-lid-color: var(--accent-color); /* #22c55e */
+            --gift-bow-color: #ef4444; /* Red-500 */
+            --gift-border-color: var(--text-primary);
         }
 
         /* BASE & FONTS */
         body {
-            background-color: var(--bg-color);
             color: var(--text-primary);
             font-family: 'Inter', sans-serif;
             transition: background-color 0.5s ease, color 0.5s ease;
             overflow: hidden; /* Verhindert Scrollbalken durch Animationen */
-        }
-        
-        .dark-mode body {
              /* DEIN NEUER SCHNEE-HINTERGRUND (radial-gradient) */
             background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
             filter: drop-shadow(0 0 10px white);
         }
-
+        
         h1, h2, h3, .font-display {
             font-family: 'Poppins', sans-serif;
         }
 
-        /* AURORA BACKGROUND (Nur für Light Mode) */
-        .aurora-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            overflow: hidden;
-            filter: blur(100px);
-            transition: opacity 0.5s ease;
-        }
-        .dark-mode .aurora-container {
-            opacity: 0; /* Aurora im Dark Mode ausblenden */
-        }
-
-        .aurora-shape {
-            position: absolute;
-            border-radius: 50%;
-            opacity: 0.3;
-            animation: moveAurora 25s infinite alternate ease-in-out;
-        }
-        .aurora-1 { background-color: var(--aurora-1); width: 400px; height: 400px; top: 10%; left: 10%; animation-duration: 20s; }
-        .aurora-2 { background-color: var(--aurora-2); width: 500px; height: 500px; top: 50%; left: 60%; animation-duration: 25s; }
-        .aurora-3 { background-color: var(--aurora-3); width: 350px; height: 350px; top: 80%; left: 20%; animation-duration: 30s; }
-
-        @keyframes moveAurora {
-            0% { transform: translate(0, 0) scale(1); }
-            50% { transform: translate(100px, 50px) scale(1.2); }
-            100% { transform: translate(-50px, -100px) scale(1); }
-        }
-
-        /* SCHNEEFALL-ANIMATION (Nur für Dark Mode) */
+        /* SCHNEEFALL-ANIMATION */
         #snow-container {
             position: fixed;
             top: 0;
@@ -114,11 +62,7 @@
             height: 100%;
             z-index: -1;
             overflow: hidden;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
-        .dark-mode #snow-container {
-            opacity: 1; /* Schnee im Dark Mode einblenden */
+            opacity: 1; /* Immer sichtbar */
         }
         .snow {
             position: absolute;
@@ -141,24 +85,6 @@
         }
 
         /* CUSTOM COMPONENTS */
-        .main-btn {
-            background-color: var(--accent-color);
-            color: white;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px -2px rgba(0,0,0,0.1);
-        }
-        .main-btn:hover {
-            background-color: var(--accent-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px -2px rgba(0,0,0,0.15);
-        }
-        .main-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
         .secondary-btn {
             background-color: transparent;
             color: var(--text-secondary);
@@ -195,19 +121,6 @@
         .shimmer-h1 {
             background: linear-gradient(
                 90deg,
-                var(--text-primary) 25%,
-                #ffffff 50%,
-                var(--text-primary) 75%
-            );
-            background-size: 200% auto;
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            animation: shimmer-text 4s linear infinite;
-        }
-        .dark-mode .shimmer-h1 {
-            background: linear-gradient(
-                90deg,
                 var(--text-secondary) 25%,
                 #ffffff 50%,
                 var(--text-secondary) 75%
@@ -216,6 +129,7 @@
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
+            animation: shimmer-text 4s linear infinite;
         }
         @keyframes shimmer-text {
             to {
@@ -231,17 +145,123 @@
         #numberDisplay.pop-in {
             animation: popIn 0.5s ease-out forwards;
         }
+        
+        /* --- START: Geschenk-Animation --- */
+        .gift-container {
+            width: 150px;
+            height: 170px; /* Höhe für Box + Klick-Hinweis */
+            position: relative;
+        }
+        .gift {
+            width: 150px;
+            height: 130px;
+            position: relative;
+        }
+        .gift-lid {
+            width: 160px; /* Etwas breiter als die Box */
+            height: 40px;
+            background-color: var(--gift-lid-color); 
+            border: 3px solid var(--gift-border-color);
+            border-radius: 8px;
+            position: absolute;
+            top: 0;
+            left: -5px; /* Zentriert über der Box */
+            z-index: 10;
+            transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.5s ease;
+        }
+        .gift-box {
+            width: 150px;
+            height: 90px;
+            background-color: var(--gift-box-color);
+            border: 3px solid var(--gift-border-color);
+            border-top: none;
+            border-radius: 8px;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+        }
+
+        /* Schleifen (Bows) */
+        .bow-v { /* Vertical ribbon */
+            position: absolute;
+            width: 25px;
+            height: 100%;
+            background-color: var(--gift-bow-color);
+            border-left: 3px solid var(--gift-border-color);
+            border-right: 3px solid var(--gift-border-color);
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .gift-lid .bow-h { /* Horizontal ribbon on lid */
+            position: absolute;
+            width: 100%;
+            height: 25px;
+            background-color: var(--gift-bow-color);
+            border-top: 3px solid var(--gift-border-color);
+            border-bottom: 3px solid var(--gift-border-color);
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        /* Schleife (Knoten) */
+        .gift-lid .bow-v::before {
+            content: '';
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 6px solid var(--gift-bow-color);
+            border-radius: 50%;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 0 3px var(--gift-border-color);
+            background-color: var(--gift-lid-color);
+            z-index: 1;
+        }
+        
+        /* Klick-Hinweis */
+        .click-hint {
+            position: absolute;
+            bottom: -35px; /* Unter der Box */
+            width: 100%;
+            text-align: center;
+            color: var(--text-secondary);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+        .gift-container:hover .click-hint {
+            opacity: 1;
+            color: var(--text-primary);
+        }
+        
+        /* Öffnen-Animation */
+        .gift-container.open .gift-lid {
+            transform: translateY(-120px) rotate(15deg) scale(0.9);
+            opacity: 0;
+        }
+        .gift-container.open .click-hint {
+            opacity: 0;
+        }
+        
+        /* Deaktivierter Zustand (wird nicht verwendet, aber nützlich) */
+        .gift-container.disabled {
+            cursor: not-allowed;
+            filter: saturate(0.5);
+            opacity: 0.7;
+        }
+        .gift-container.disabled .gift-lid {
+            transform: translateY(-120px) rotate(15deg) scale(0.9);
+            opacity: 0;
+        }
+        /* --- END: Geschenk-Animation --- */
 
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
-    
-    <!-- Aurora Background Effect (Nur Light Mode) -->
-    <div class="aurora-container">
-        <div class="aurora-shape aurora-1"></div>
-        <div class="aurora-shape aurora-2"></div>
-        <div class="aurora-shape aurora-3"></div>
-    </div>
     
     <!-- Snowfall Background Effect (Nur Dark Mode) -->
     <div id="snow-container">
@@ -255,10 +275,7 @@
     
         <!-- Right Side: Theme Toggle & Logo -->
         <div class="flex items-center gap-4">
-            <button id="theme-toggle" class="glass-card h-12 w-12 flex items-center justify-center rounded-full focus:outline-none" aria-label="Dark Mode umschalten">
-                <svg id="theme-icon-sun" class="h-6 w-6" style="color: var(--icon-color);" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                <svg id="theme-icon-moon" class="h-6 w-6 hidden" style="color: var(--icon-color);" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-            </button>
+            <!-- Theme-Toggle-Button entfernt -->
             <div class="flex items-center justify-center h-12 w-auto p-2">
                 <!-- Logo-Pfad angepasst auf deine Datei-Struktur -->
                 <img src="schaeffler-logo.svg" alt="Schaeffler Logo" class="h-8">
@@ -293,11 +310,25 @@
                 <p id="errorMessage"></p>
             </div>
 
-            <!-- Button zum Ziehen (Neues Design) -->
-            <button id="drawButton" class="main-btn w-full text-white font-bold py-3 px-6 rounded-lg text-lg flex items-center justify-center gap-2">
-                <i data-lucide="sparkles" style="width:20px; height: 20px;"></i>
-                Jetzt meine Nummer ziehen!
-            </button>
+            <!-- Animiertes Geschenk (ersetzt den Button) -->
+            <div id="drawGiftContainer" class="gift-container cursor-pointer mx-auto hidden" role="button" aria-label="Nummer ziehen">
+                <div class="gift">
+                    <div class="gift-lid">
+                        <!-- Deckel-Schleife -->
+                        <div class="bow-v"></div>
+                        <div class="bow-h"></div>
+                    </div>
+                    <div class="gift-box">
+                        <!-- Box-Schleife -->
+                        <div class="bow-v"></div>
+                    </div>
+                    <!-- "Klicken" Text -->
+                    <div class="click-hint">
+                        <i data-lucide="hand-metal" class="w-5 h-5"></i>
+                        <span>Klicken zum Öffnen</span>
+                    </div>
+                </div>
+            </div>
             
             <!-- Admin-Bereich (Neues Design) - ID 'adminSection' hinzugefügt -->
             <div id="adminSection" class="mt-10 pt-6 border-t hidden" style="border-color: var(--border-color);">
@@ -338,7 +369,7 @@
         const errorDiv = document.getElementById('error');
         const numberDisplay = document.getElementById('numberDisplay');
         const errorMessage = document.getElementById('errorMessage');
-        const drawButton = document.getElementById('drawButton');
+        const drawGiftContainer = document.getElementById('drawGiftContainer'); // Geändert
         const initButton = document.getElementById('initButton');
         const adminSection = document.getElementById('adminSection');
 
@@ -387,7 +418,7 @@
                 });
 
                 // Event Listeners für die Buttons
-                drawButton.addEventListener('click', drawNumber);
+                drawGiftContainer.addEventListener('click', onGiftClick); // Geändert
                 initButton.addEventListener('click', initializeLottery);
 
             } catch (err) {
@@ -395,6 +426,32 @@
                 showError("Ein kritischer Fehler ist aufgetreten.");
             }
         }
+        
+        /**
+         * NEU: Startet die Geschenk-Animation und dann die Ziehung.
+         */
+        function onGiftClick() {
+            // Verhindert Doppelklick, während Animation läuft
+            if (drawGiftContainer.classList.contains('open')) {
+                return; 
+            }
+            
+            // 1. Animation starten
+            drawGiftContainer.classList.add('open');
+            
+            // 2. Nach der Deckel-Animation die Nummer ziehen
+            setTimeout(() => {
+                // 3. Lade-Spinner anzeigen (versteckt das Geschenk)
+                setLoading(true); 
+                
+                // 4. Nummer in der Datenbank ziehen (verzögert, um Ladespinner zu zeigen)
+                setTimeout(() => {
+                    drawNumber(); // Die eigentliche Firebase-Funktion
+                }, 500); // Kurze Pause, damit der Spinner sichtbar ist
+                
+            }, 600); // Muss zur CSS-Animationsdauer passen (0.5s) + Puffer
+        }
+
 
         /**
          * Prüft, ob der Benutzer bereits eine Nummer im lokalen Speicher hat.
@@ -402,9 +459,9 @@
         function checkLocalStorage() {
             const storedNumber = localStorage.getItem(`wichtelNummer_${appId}`);
             if (storedNumber) {
-                showResult(storedNumber);
+                showResult(storedNumber); // Versteckt automatisch das Geschenk
             } else {
-                drawButton.classList.remove('hidden');
+                drawGiftContainer.classList.remove('hidden'); // Zeigt das Geschenk
             }
         }
 
@@ -416,7 +473,7 @@
                 showError("Datenbank ist nicht verbunden.");
                 return;
             }
-            setLoading(true);
+            // setLoading(true) wurde nach onGiftClick verschoben
 
             try {
                 // Starte eine Transaktion
@@ -515,7 +572,7 @@
 
         function setLoading(isLoading) {
             loadingDiv.classList.toggle('hidden', !isLoading);
-            drawButton.classList.toggle('hidden', isLoading);
+            drawGiftContainer.classList.toggle('hidden', isLoading); // Geschenk bei Laden ausblenden
             resultDiv.classList.add('hidden');
             errorDiv.classList.add('hidden');
             if(isLoading) initClickCount = 0; // Zähler bei Ladevorgang zurücksetzen
@@ -527,7 +584,7 @@
                 numberDisplay.classList.add('pop-in');
             }
             resultDiv.classList.remove('hidden');
-            drawButton.classList.add('hidden');
+            drawGiftContainer.classList.add('hidden'); // Geschenk bei Ergebnis ausblenden
             loadingDiv.classList.add('hidden');
             errorDiv.classList.add('hidden');
         }
@@ -535,7 +592,7 @@
         function showError(message) {
             errorMessage.textContent = message;
             errorDiv.classList.remove('hidden');
-            drawButton.classList.add('hidden'); // Button bei Fehler ausblenden
+            drawGiftContainer.classList.add('hidden'); // Geschenk bei Fehler ausblenden
             loadingDiv.classList.add('hidden');
             resultDiv.classList.add('hidden');
             
@@ -543,46 +600,15 @@
             if (!message.startsWith("Admin:")) {
                  setTimeout(() => {
                     if (localStorage.getItem(`wichtelNummer_${appId}`) == null) {
-                        drawButton.classList.remove('hidden');
+                        drawGiftContainer.classList.remove('hidden'); // Geschenk wieder anzeigen
+                        drawGiftContainer.classList.remove('open'); // Animations-Reset
                         errorDiv.classList.add('hidden');
                     }
                  }, 3000);
             }
         }
 
-        // --- Theme Toggle ---
-        const themeToggle = document.getElementById('theme-toggle');
-        const sunIcon = document.getElementById('theme-icon-sun');
-        const moonIcon = document.getElementById('theme-icon-moon');
-        const htmlEl = document.documentElement;
-
-        // Prüfen, ob Theme im LocalStorage gespeichert ist
-        const currentTheme = localStorage.getItem('theme');
-        if (currentTheme === 'dark') {
-            htmlEl.classList.add('dark-mode');
-            sunIcon.classList.add('hidden');
-            moonIcon.classList.remove('hidden');
-        } else {
-            htmlEl.classList.remove('dark-mode');
-            sunIcon.classList.remove('hidden');
-            moonIcon.classList.add('hidden');
-        }
-
-        themeToggle.addEventListener('click', () => {
-            if (htmlEl.classList.contains('dark-mode')) {
-                // Light Mode
-                htmlEl.classList.remove('dark-mode');
-                localStorage.setItem('theme', 'light');
-                sunIcon.classList.remove('hidden');
-                moonIcon.classList.add('hidden');
-            } else {
-                // Dark Mode
-                htmlEl.classList.add('dark-mode');
-                localStorage.setItem('theme', 'dark');
-                sunIcon.classList.add('hidden');
-                moonIcon.classList.remove('hidden');
-            }
-        });
+        // --- Theme Toggle (ENTFERNT) ---
 
         // --- Admin Sektion per URL-Parameter einblenden ---
         function checkAdminMode() {
@@ -647,7 +673,7 @@
         checkAdminMode();
         main();
         createSnowfall(); // Schneefall starten
-        lucide.createIcons(); // Icons rendern
+        lucide.createIcons(); // Icons rendern (wichtig für das Hand-Icon)
 
     </script>
 </body>
