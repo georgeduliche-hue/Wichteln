@@ -62,7 +62,7 @@
         // Firebase Core SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         // Firebase Auth SDK (für die Benutzeranmeldung)
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         // Firebase Firestore SDK (für die Datenbank)
         import { getFirestore, doc, getDoc, setDoc, runTransaction, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
@@ -94,12 +94,11 @@
         let userId;
 
         // --- Datenbank-Pfad ---
-        // Pfad zum Dokument, das die verfügbaren Nummern speichert.
-        // Wir verwenden einen öffentlichen Pfad, damit alle Azubis darauf zugreifen können.
-        const DB_PATH_PREFIX = `/artifacts/${appId}/public/data/wichteln`;
+        // KORREKTUR FÜR NETLIFY: Der Pfad muss einfach sein.
+        const DB_PATH_PREFIX = 'wichtel-lotterie'; // Sauberer Pfad für Firestore
         const WICHTELN_DOC_REF = () => doc(db, DB_PATH_PREFIX, 'main');
         const MAX_NUMBER = 63; // Maximale Anzahl an Nummern (1 bis 63)
-
+ 
         /**
          * Hauptfunktion: Initialisiert Firebase und prüft den Status des Benutzers.
          */
@@ -243,11 +242,14 @@
                 showError("Datenbank ist nicht verbunden.");
                 return;
             }
-
-            const confirmed = window.confirm("Bist du sicher? Dies setzt die gesamte Lotterie zurück und löscht alle bisher gezogenen Nummern!");
-            if (!confirmed) {
-                return;
-            }
+            
+            // window.confirm ist in manchen Umgebungen (wie dem iframe, in dem wir oft laufen) blockiert.
+            // Wir machen es einfach klickbar, da es nur ein Admin-Button ist.
+            // const confirmed = window.confirm("Bist du sicher? Dies setzt die gesamte Lotterie zurück und löscht alle bisher gezogenen Nummern!");
+            // if (!confirmed) {
+            //     return;
+            // }
+            console.log("Starte Initialisierung...");
 
             setLoading(true);
             try {
@@ -263,6 +265,7 @@
                 localStorage.removeItem(`wichtelNummer_${appId}`);
 
                 setLoading(false);
+                console.log("Initialisierung erfolgreich. Lade Seite neu.");
                 // Seite neu laden, um den Zustand zurückzusetzen
                 window.location.reload();
 
@@ -308,4 +311,3 @@
     </script>
 </body>
 </html>
-
