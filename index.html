@@ -1,24 +1,26 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="de" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wichtel-Lotterie</title>
-    <!-- 
-        HINWEIS: Die Favicon-Links wurden entfernt, da die Dateien nicht bereitgestellt wurden.
-    -->
+    
+    <!-- Lädt Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lädt Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Lädt Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 
-    <!-- Eingebettetes CSS (Design von "Berichtsheft") -->
     <style>
-        /* THEME VARIABLES */
+        /* THEME VARIABLES (Basis: Green) */
         :root {
             --bg-color: #f0f4f8;
-            --card-bg-color: rgba(255, 255, 255, 0.85); /* Made it whiter */
+            --card-bg-color: rgba(255, 255, 255, 0.85);
             --text-primary: #1e293b;
             --text-secondary: #475569;
             --border-color: rgba(203, 213, 225, 0.5);
@@ -31,11 +33,12 @@
             --aurora-3: #4ade80; /* Green-400 */
             --shadow-color: rgba(30, 41, 59, 0.1);
             --icon-color: #64748b;
-            --input-bg-color: rgba(0, 0, 0, 0.05);
         }
 
         .dark-mode {
-            --bg-color: #0d1117;
+            /* DEIN NEUER SCHNEE-HINTERGRUND */
+            --bg-color: #090a0f; 
+            /* Fallback, falls radial-gradient nicht greift */
             --card-bg-color: rgba(22, 27, 34, 0.5);
             --text-primary: #e2e8f0;
             --text-secondary: #94a3b8;
@@ -49,7 +52,6 @@
             --aurora-3: #84cc16; /* Lime-500 */
             --shadow-color: rgba(0, 0, 0, 0.2);
             --icon-color: #94a3b8;
-            --input-bg-color: rgba(255, 255, 255, 0.1);
         }
 
         /* BASE & FONTS */
@@ -58,13 +60,20 @@
             color: var(--text-primary);
             font-family: 'Inter', sans-serif;
             transition: background-color 0.5s ease, color 0.5s ease;
-            overflow: hidden;
+            overflow: hidden; /* Verhindert Scrollbalken durch Animationen */
         }
+        
+        .dark-mode body {
+             /* DEIN NEUER SCHNEE-HINTERGRUND (radial-gradient) */
+            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+            filter: drop-shadow(0 0 10px white);
+        }
+
         h1, h2, h3, .font-display {
             font-family: 'Poppins', sans-serif;
         }
 
-        /* AURORA BACKGROUND */
+        /* AURORA BACKGROUND (Nur für Light Mode) */
         .aurora-container {
             position: fixed;
             top: 0;
@@ -74,7 +83,12 @@
             z-index: -1;
             overflow: hidden;
             filter: blur(100px);
+            transition: opacity 0.5s ease;
         }
+        .dark-mode .aurora-container {
+            opacity: 0; /* Aurora im Dark Mode ausblenden */
+        }
+
         .aurora-shape {
             position: absolute;
             border-radius: 50%;
@@ -91,6 +105,31 @@
             100% { transform: translate(-50px, -100px) scale(1); }
         }
 
+        /* SCHNEEFALL-ANIMATION (Nur für Dark Mode) */
+        #snow-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        .dark-mode #snow-container {
+            opacity: 1; /* Schnee im Dark Mode einblenden */
+        }
+        .snow {
+            position: absolute;
+            width: 10px; /* Basisgröße, wird überschrieben */
+            height: 10px; /* Basisgröße, wird überschrieben */
+            background: white;
+            border-radius: 50%;
+        }
+        /* Die @keyframes für den Schnee werden dynamisch von JS erstellt */
+
+
         /* CARD & LAYOUT */
         .glass-card {
             background-color: var(--card-bg-color);
@@ -98,7 +137,7 @@
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--border-color);
             box-shadow: 0 8px 32px 0 var(--shadow-color);
-            transition: background-color 0.5s ease, border-color 0.5s ease;
+            transition: background-color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
         }
 
         /* CUSTOM COMPONENTS */
@@ -119,16 +158,17 @@
             transform: none;
             box-shadow: none;
         }
+
         .secondary-btn {
-             background-color: transparent;
-             color: var(--text-secondary);
-             transition: all 0.3s ease;
+            background-color: transparent;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
         }
         .secondary-btn:hover {
             color: var(--text-primary);
         }
 
-        /* LOADER ANIMATION (von Berichtsheft) */
+        /* LOADER ANIMATION */
         .loader {
             width: 60px;
             height: 60px;
@@ -143,15 +183,15 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        
-        /* Error Message (von Berichtsheft) */
+
+        /* Error Message */
         .error-message {
             background-color: var(--error-bg-color);
             color: var(--error-color);
             transition: all 0.3s ease;
         }
         
-        /* Shimmer Animation for H1 (von Berichtsheft) */
+        /* Shimmer Animation for H1 */
         .shimmer-h1 {
             background: linear-gradient(
                 90deg,
@@ -164,10 +204,9 @@
             background-clip: text;
             color: transparent;
             animation: shimmer-text 4s linear infinite;
-            animation-delay: 2s;
         }
         .dark-mode .shimmer-h1 {
-             background: linear-gradient(
+            background: linear-gradient(
                 90deg,
                 var(--text-secondary) 25%,
                 #ffffff 50%,
@@ -183,78 +222,75 @@
                 background-position: -200% center;
             }
         }
-
-        /* Spezifische Stile für Wichtel-Ergebnis */
-        #numberDisplay {
-            font-family: 'Poppins', sans-serif;
-            font-weight: 700;
-            color: var(--accent-color); /* Nutzt die grüne Akzentfarbe */
-            font-size: 6rem; /* 96px */
-            line-height: 1;
-            margin-top: 1rem;
-            margin-bottom: 1rem;
-            /* Animation für das Erscheinen der Zahl */
-            transform: scale(0.8);
-            opacity: 0;
-            animation: popInNumber 0.5s ease-out forwards 0.2s;
+        
+        /* Animation für die gezogene Zahl */
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
         }
-
-        @keyframes popInNumber {
-            to {
-                transform: scale(1);
-                opacity: 1;
-            }
+        #numberDisplay.pop-in {
+            animation: popIn 0.5s ease-out forwards;
         }
 
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
-    <!-- Background Effect -->
+    
+    <!-- Aurora Background Effect (Nur Light Mode) -->
     <div class="aurora-container">
         <div class="aurora-shape aurora-1"></div>
         <div class="aurora-shape aurora-2"></div>
         <div class="aurora-shape aurora-3"></div>
     </div>
+    
+    <!-- Snowfall Background Effect (Nur Dark Mode) -->
+    <div id="snow-container">
+        <!-- Schneeflocken werden hier von JS eingefügt -->
+    </div>
 
-    <!-- Header (von Berichtsheft, vereinfacht) -->
-    <header class="fixed top-4 right-4 z-50 flex items-center gap-4">
-        <button id="theme-toggle" class="glass-card h-12 w-12 flex items-center justify-center rounded-full focus:outline-none" aria-label="Dark Mode umschalten">
-            <svg id="theme-icon-sun" class="h-6 w-6" style="color: var(--icon-color);" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-            <svg id="theme-icon-moon" class="h-6 w-6 hidden" style="color: var(--icon-color);" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-        </button>
-        <div class="flex items-center justify-center h-12 w-auto p-2">
-            <!-- HIER IST DIE ÄNDERUNG: Logo wieder eingefügt -->
-            <img src="schaeffler-logo.svg" alt="Schaeffler Logo" class="h-8">
+    <!-- Header with Buttons -->
+    <header class="fixed top-4 left-4 right-4 z-50 flex items-center justify-between">
+        <!-- Left Side: Empty or Placeholder -->
+        <div></div>
+    
+        <!-- Right Side: Theme Toggle & Logo -->
+        <div class="flex items-center gap-4">
+            <button id="theme-toggle" class="glass-card h-12 w-12 flex items-center justify-center rounded-full focus:outline-none" aria-label="Dark Mode umschalten">
+                <svg id="theme-icon-sun" class="h-6 w-6" style="color: var(--icon-color);" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                <svg id="theme-icon-moon" class="h-6 w-6 hidden" style="color: var(--icon-color);" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+            </button>
+            <div class="flex items-center justify-center h-12 w-auto p-2">
+                <!-- Logo-Pfad angepasst auf deine Datei-Struktur -->
+                <img src="schaeffler-logo.svg" alt="Schaeffler Logo" class="h-8">
+            </div>
         </div>
     </header>
     
-    <!-- Hauptcontainer (Wichtel-Logik im neuen Design) -->
+    <!-- Main Container -->
     <main id="app-container" class="w-full max-w-md relative">
         
+        <!-- Glass Card für Wichtel-Lotterie -->
         <div class="glass-card rounded-2xl w-full p-8 md:p-12 text-center">
             
-            <h1 class="font-display text-4xl font-bold mb-3 shimmer-h1">Wichtel-Lotterie</h1>
-            <p class="text-lg mb-8" style="color: var(--text-secondary);">Ziehe deine einzigartige Nummer (1-63).</p>
+            <h1 class="font-display text-4xl md:text-5xl font-bold mb-3 shimmer-h1">Wichtel-Lotterie</h1>
+            <p class="text-lg mb-8" style="color: var(--text-secondary);">Ziehe deine einzigartige Nummer von 1 bis 63.</p>
 
-            <!-- Lade-Spinner (Neues Design) -->
-            <div id="loading" class="hidden my-8 flex flex-col items-center justify-center">
-                <span class="loader mb-8"></span>
-                <h2 class="font-display text-2xl font-bold mb-2">Ziehe Nummer...</h2>
-                <p class="text-lg" style="color: var(--text-secondary);">Moment...</p>
+            <!-- Lade-Spinner (standardmäßig versteckt) -->
+            <div id="loading" class="hidden my-8 flex justify-center">
+                <span class="loader"></span>
+                <p class="sr-only">Laden...</p>
             </div>
 
-            <!-- Ergebnis-Anzeige (Neues Design) -->
+            <!-- Ergebnis-Anzeige (standardmäßig versteckt) -->
             <div id="result" class="hidden my-8">
                 <p class="text-lg" style="color: var(--text-secondary);">Deine gezogene Wichtel-Nummer ist:</p>
-                <p id="numberDisplay">--</p>
+                <p id="numberDisplay" class="text-7xl font-extrabold my-4" style="color: var(--accent-color);">--</p>
                 <p class="text-sm" style="color: var(--text-secondary);">Bitte merke dir diese Nummer gut!</p>
             </div>
 
-            <!-- Fehler-Anzeige (Neues Design) -->
-            <div id="error" class="hidden my-8">
-                <div class="error-message p-4 rounded-lg">
-                    <p id="errorMessage" class="font-medium"></p>
-                </div>
+            <!-- Fehler-Anzeige (standardmäßig versteckt) -->
+            <div id="error" class="hidden my-8 p-4 error-message rounded-lg">
+                <p id="errorMessage"></p>
             </div>
 
             <!-- Button zum Ziehen (Neues Design) -->
@@ -270,31 +306,32 @@
                     Lotterie Initialisieren / Zurücksetzen
                 </button>
             </div>
-            
         </div>
     </main>
+    
 
-    <!-- Wichtel-Lotterie JavaScript (mit Firebase) -->
+    <!-- Firebase SDKs -->
     <script type="module">
         // Firebase Core SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         // Firebase Auth SDK (für die Benutzeranmeldung)
         import { getAuth, signInAnonymously, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         // Firebase Firestore SDK (für die Datenbank)
-        import { getFirestore, doc, getDoc, setDoc, runTransaction, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, runTransaction, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- Firebase Config (von deiner Wichtel-App) ---
+        // --- Konfiguration für Netlify ---
+        // DEINE FIREBASE-KONFIGURATION
         const firebaseConfig = {
-          apiKey: "AIzaSyAVAF3jzjP8harkNYYgZmIhbIHn5TZmAP0",
-          authDomain: "wichteln-603a8.firebaseapp.com",
-          projectId: "wichteln-603a8",
-          storageBucket: "wichteln-603a8.firebasestorage.app",
-          messagingSenderId: "119876319727",
-          appId: "1:119876319727:web:007e1aadbb1e7a59141e1a",
-          measurementId: "G-89T75W5MTZ"
+            apiKey: "AIzaSyAVAF3jzjP8harkNYYgZmIhbIHn5TZmAP0",
+            authDomain: "wichteln-603a8.firebaseapp.com",
+            projectId: "wichteln-603a8",
+            storageBucket: "wichteln-603a8.firebasestorage.app",
+            messagingSenderId: "119876319727",
+            appId: "1:119876319727:web:007e1aadbb1e7a59141e1a",
+            measurementId: "G-89T75W5MTZ"
         };
         const appId = 'wichteln-603a8'; // Festgelegt für Netlify
-        
+
         // --- UI-Elemente ---
         const loadingDiv = document.getElementById('loading');
         const resultDiv = document.getElementById('result');
@@ -303,14 +340,15 @@
         const errorMessage = document.getElementById('errorMessage');
         const drawButton = document.getElementById('drawButton');
         const initButton = document.getElementById('initButton');
+        const adminSection = document.getElementById('adminSection');
 
         let db, auth;
         let userId;
+        let initClickCount = 0; // Für Admin-Doppelklick-Bestätigung
 
-        // --- Datenbank-Pfad (Wichtel-App, korrigiert) ---
-        const DB_PATH_PREFIX = 'wichtel-lotterie'; 
-        const WICHTELN_DOC_REF = () => doc(db, DB_PATH_PREFIX, 'main');
-        const MAX_NUMBER = 63; 
+        // --- Datenbank-Pfad (Für Netlify vereinfacht) ---
+        const WICHTELN_DOC_REF = () => doc(db, 'wichteln', 'main');
+        const MAX_NUMBER = 63; // Maximale Anzahl an Nummern (1 bis 63)
 
         /**
          * Hauptfunktion: Initialisiert Firebase und prüft den Status des Benutzers.
@@ -326,9 +364,9 @@
                 const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
-                // setLogLevel('debug'); // (Optional) Für Debugging in der Konsole
+                // setLogLevel('debug'); // (Optional) Für Debugging
 
-                // Persistenz auf "local" setzen, damit der Benutzer angemeldet bleibt
+                // Persistenz auf "local" setzen
                 await setPersistence(auth, browserLocalPersistence);
 
                 // Benutzer-Authentifizierung (Vereinfacht für Netlify)
@@ -336,8 +374,6 @@
                     if (user) {
                         // Benutzer ist angemeldet
                         userId = user.uid;
-                        // console.log("Benutzer angemeldet:", userId);
-                        // Prüfen, ob der Benutzer bereits eine Nummer gezogen hat
                         checkLocalStorage();
                     } else {
                         // Benutzer ist nicht angemeldet, anonym anmelden
@@ -361,16 +397,13 @@
         }
 
         /**
-         * Prüft, ob der Benutzer diese Seite schonmal besucht und eine Nummer
-         * im lokalen Speicher seines Browsers gespeichert hat.
+         * Prüft, ob der Benutzer bereits eine Nummer im lokalen Speicher hat.
          */
         function checkLocalStorage() {
             const storedNumber = localStorage.getItem(`wichtelNummer_${appId}`);
             if (storedNumber) {
-                // Benutzer hat bereits eine Nummer, zeige sie direkt an
                 showResult(storedNumber);
             } else {
-                // Benutzer hat noch keine Nummer, Button anzeigen
                 drawButton.classList.remove('hidden');
             }
         }
@@ -383,7 +416,6 @@
                 showError("Datenbank ist nicht verbunden.");
                 return;
             }
-
             setLoading(true);
 
             try {
@@ -393,7 +425,7 @@
                     const docSnap = await transaction.get(docRef);
 
                     if (!docSnap.exists() || !docSnap.data().availableNumbers) {
-                        // Sicherheitsnetz, falls DB leer ist
+                        // Sicherheitsnetz, falls nicht initialisiert
                         console.warn("Lotterie-Dokument nicht gefunden, erstelle neues...");
                         const initialNumbers = Array.from({ length: MAX_NUMBER }, (_, i) => i + 1);
                         const randomIndex = Math.floor(Math.random() * initialNumbers.length);
@@ -406,7 +438,6 @@
                     const availableNumbers = data.availableNumbers;
 
                     if (availableNumbers.length === 0) {
-                        // Keine Nummern mehr verfügbar
                         throw new Error("Alle Nummern sind bereits vergeben!");
                     }
 
@@ -414,17 +445,14 @@
                     const randomIndex = Math.floor(Math.random() * availableNumbers.length);
                     const number = availableNumbers.splice(randomIndex, 1)[0]; // Entfernt die Nummer
 
-                    // Das aktualisierte Array (ohne die gezogene Nummer) zurück in die DB schreiben
+                    // Das aktualisierte Array zurückschreiben
                     transaction.update(docRef, { availableNumbers: availableNumbers });
-
-                    // Die gezogene Nummer zurückgeben
                     return number;
                 });
 
                 // Transaktion war erfolgreich
                 setLoading(false);
-                showResult(drawnNumber);
-                // Nummer im lokalen Speicher sichern, um Doppel-Ziehen zu verhindern
+                showResult(drawnNumber, true); // true für Animation
                 localStorage.setItem(`wichtelNummer_${appId}`, drawnNumber);
 
             } catch (err) {
@@ -439,8 +467,8 @@
         }
 
         /**
-         * (Admin-Funktion) Initialisiert oder setzt die Lotterie zurück.
-         * HINWEIS: window.confirm() wird vermieden; stattdessen "Zweimal-Klick"-Logik.
+         * (Admin-Funktion) Initialisiert die Lotterie.
+         * Erfordert jetzt einen Doppelklick zur Bestätigung.
          */
         async function initializeLottery() {
             if (!db) {
@@ -448,56 +476,56 @@
                 return;
             }
             
-            // Zeige Bestätigung im Fehler-Feld statt window.confirm()
-            showError("Sicher? Zum Bestätigen ERNEUT klicken.");
+            // Doppelklick-Bestätigung statt window.confirm()
+            if (initClickCount === 0) {
+                showError("Admin: Nochmal klicken, um die Lotterie unwiderruflich zurückzusetzen!");
+                initClickCount++;
+                // Timer, um den Klick-Zähler zurückzusetzen
+                setTimeout(() => { initClickCount = 0; }, 3000);
+                return;
+            }
             
-            // Ändere den Klick-Handler, um die Bestätigung abzuwarten
-            initButton.onclick = async () => {
-                console.log("Starte Initialisierung...");
-                setLoading(true);
-                try {
-                    // Erstellt ein Array [1, 2, 3, ..., 63]
-                    const initialNumbers = Array.from({ length: MAX_NUMBER }, (_, i) => i + 1);
-                    
-                    // Überschreibt das Dokument in der Datenbank
-                    await setDoc(WICHTELN_DOC_REF(), {
-                        availableNumbers: initialNumbers
-                    });
+            // Zweiter Klick (Bestätigung)
+            initClickCount = 0;
+            setLoading(true);
 
-                    // Lokalen Speicher für diesen Benutzer löschen
-                    localStorage.removeItem(`wichtelNummer_${appId}`);
-
-                    setLoading(false);
-                    console.log("Initialisierung erfolgreich. Lade Seite neu.");
-                    // Seite neu laden, um den Zustand zurückzusetzen
-                    window.location.reload();
-
-                } catch (err) {
-                    console.error("Fehler beim Initialisieren:", err);
-                    setLoading(false);
-                    showError("Fehler beim Zurücksetzen der Lotterie.");
-                }
+            try {
+                // Erstellt ein Array [1, 2, 3, ..., 63]
+                const initialNumbers = Array.from({ length: MAX_NUMBER }, (_, i) => i + 1);
                 
-                // Setze den Klick-Handler auf die ursprüngliche Funktion zurück
-                initButton.onclick = initializeLottery;
-            };
+                // Überschreibt das Dokument in der Datenbank
+                await setDoc(WICHTELN_DOC_REF(), {
+                    availableNumbers: initialNumbers
+                });
+
+                // Lokalen Speicher für diesen Benutzer löschen
+                localStorage.removeItem(`wichtelNummer_${appId}`);
+
+                setLoading(false);
+                window.location.reload(); // Seite neu laden
+
+            } catch (err) {
+                console.error("Fehler beim Initialisieren:", err);
+                setLoading(false);
+                showError("Fehler beim Zurücksetzen der Lotterie.");
+            }
         }
 
         // --- UI-Hilfsfunktionen ---
 
         function setLoading(isLoading) {
-            if (isLoading) {
-                loadingDiv.classList.remove('hidden');
-                drawButton.classList.add('hidden');
-                resultDiv.classList.add('hidden');
-                errorDiv.classList.add('hidden');
-            } else {
-                loadingDiv.classList.add('hidden');
-            }
+            loadingDiv.classList.toggle('hidden', !isLoading);
+            drawButton.classList.toggle('hidden', isLoading);
+            resultDiv.classList.add('hidden');
+            errorDiv.classList.add('hidden');
+            if(isLoading) initClickCount = 0; // Zähler bei Ladevorgang zurücksetzen
         }
 
-        function showResult(number) {
+        function showResult(number, animate = false) {
             numberDisplay.textContent = number;
+            if(animate) {
+                numberDisplay.classList.add('pop-in');
+            }
             resultDiv.classList.remove('hidden');
             drawButton.classList.add('hidden');
             loadingDiv.classList.add('hidden');
@@ -511,46 +539,48 @@
             loadingDiv.classList.add('hidden');
             resultDiv.classList.add('hidden');
             
-            // Setze den Admin-Button-Handler zurück, wenn ein Fehler angezeigt wird 
-            // (außer bei der Bestätigungsmeldung)
-            if (!message.includes("Sicher?")) {
-                 initButton.onclick = initializeLottery;
+            // Wenn es kein Admin-Reset-Fehler war, Button wieder anzeigen
+            if (!message.startsWith("Admin:")) {
+                 setTimeout(() => {
+                    if (localStorage.getItem(`wichtelNummer_${appId}`) == null) {
+                        drawButton.classList.remove('hidden');
+                        errorDiv.classList.add('hidden');
+                    }
+                 }, 3000);
             }
         }
 
-        // --- JavaScript für das Design (Theme-Toggle) ---
-        
-        // Initialisiert Lucide-Icons
-        lucide.createIcons();
-        
+        // --- Theme Toggle ---
         const themeToggle = document.getElementById('theme-toggle');
         const sunIcon = document.getElementById('theme-icon-sun');
         const moonIcon = document.getElementById('theme-icon-moon');
+        const htmlEl = document.documentElement;
 
-        // Prüft, ob ein Theme im lokalen Speicher gesetzt ist
-        if (localStorage.getItem('theme') === 'dark' || 
-            (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark-mode');
-            moonIcon.classList.remove('hidden');
+        // Prüfen, ob Theme im LocalStorage gespeichert ist
+        const currentTheme = localStorage.getItem('theme');
+        if (currentTheme === 'dark') {
+            htmlEl.classList.add('dark-mode');
             sunIcon.classList.add('hidden');
+            moonIcon.classList.remove('hidden');
         } else {
-            document.documentElement.classList.remove('dark-mode');
-            moonIcon.classList.add('hidden');
+            htmlEl.classList.remove('dark-mode');
             sunIcon.classList.remove('hidden');
+            moonIcon.classList.add('hidden');
         }
 
         themeToggle.addEventListener('click', () => {
-            // Toggle Dark Mode
-            if (document.documentElement.classList.toggle('dark-mode')) {
-                // Dark Mode an
-                localStorage.setItem('theme', 'dark');
-                moonIcon.classList.remove('hidden');
-                sunIcon.classList.add('hidden');
-            } else {
-                // Dark Mode aus
+            if (htmlEl.classList.contains('dark-mode')) {
+                // Light Mode
+                htmlEl.classList.remove('dark-mode');
                 localStorage.setItem('theme', 'light');
-                moonIcon.classList.add('hidden');
                 sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            } else {
+                // Dark Mode
+                htmlEl.classList.add('dark-mode');
+                localStorage.setItem('theme', 'dark');
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
             }
         });
 
@@ -558,16 +588,66 @@
         function checkAdminMode() {
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('admin') === '1') {
-                const adminSection = document.getElementById('adminSection');
                 if (adminSection) {
                     adminSection.classList.remove('hidden');
                 }
             }
         }
-        checkAdminMode();
+        
+        // --- Schneefall-Animation (aus SCSS übersetzt) ---
+        function createSnowfall() {
+            const snowContainer = document.getElementById('snow-container');
+            if (!snowContainer) return;
+            
+            const total = 200;
+            let styleSheet = document.createElement("style");
+            document.head.appendChild(styleSheet);
+            
+            for (let i = 1; i <= total; i++) {
+                // Zufällige Werte generieren
+                const randomX = Math.random() * 100; // vw
+                const randomOffset = (Math.random() * 200) - 100; // vw
+                const randomXEnd = randomX + randomOffset;
+                const randomXEndYoyo = randomX + (randomOffset / 2);
+                const randomYoyoTime = (Math.random() * (0.8 - 0.3) + 0.3); // 30% bis 80% der Zeit
+                const randomYoyoY = randomYoyoTime * 100; // vh
+                const randomScale = Math.random();
+                const fallDuration = (Math.random() * (30 - 10) + 10); // 10-30s
+                const fallDelay = Math.random() * -30; // 0 bis -30s
+                const opacity = Math.random();
+                
+                // Schneeflocken-Element erstellen
+                let snowFlake = document.createElement('div');
+                snowFlake.classList.add('snow');
+                snowFlake.style.opacity = opacity;
+                snowFlake.style.transform = `translate(${randomX}vw, -10px) scale(${randomScale})`;
+                snowFlake.style.width = `${randomScale * 10}px`;
+                snowFlake.style.height = `${randomScale * 10}px`;
+                snowFlake.style.animation = `fall-${i} ${fallDuration}s ${fallDelay}s linear infinite`;
+                
+                snowContainer.appendChild(snowFlake);
+                
+                // Keyframe-Animation dynamisch erstellen
+                const keyframeName = `fall-${i}`;
+                const keyframeRule = `
+                    @keyframes ${keyframeName} {
+                        ${randomYoyoTime * 100}% {
+                            transform: translate(${randomXEnd}vw, ${randomYoyoY}vh) scale(${randomScale});
+                        }
+                        to {
+                            transform: translate(${randomXEndYoyo}vw, 100vh) scale(${randomScale});
+                        }
+                    }
+                `;
+                styleSheet.sheet.insertRule(keyframeRule, styleSheet.sheet.cssRules.length);
+            }
+        }
 
-        // Start der Wichtel-Anwendung
+        // --- Start der Anwendung ---
+        checkAdminMode();
         main();
+        createSnowfall(); // Schneefall starten
+        lucide.createIcons(); // Icons rendern
 
     </script>
 </body>
