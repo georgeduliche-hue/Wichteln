@@ -32,10 +32,11 @@
             --icon-color: #94a3b8;
             
             /* Farben für das Geschenk */
-            --gift-box-color: var(--accent-hover); /* #15803d */
-            --gift-lid-color: var(--accent-color); /* #22c55e */
+            --gift-box-color: #15803d; /* Green-700 */
+            --gift-lid-color: #22c55e; /* Green-500 */
             --gift-bow-color: #ef4444; /* Red-500 */
-            --gift-border-color: var(--text-primary);
+            --gift-shadow-color: rgba(0, 0, 0, 0.3);
+            --gift-highlight-color: rgba(255, 255, 255, 0.2);
         }
 
         /* BASE & FONTS */
@@ -46,7 +47,7 @@
             overflow: hidden; /* Verhindert Scrollbalken durch Animationen */
              /* DEIN NEUER SCHNEE-HINTERGRUND (radial-gradient) */
             background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
-            filter: drop-shadow(0 0 10px white);
+            /* Filter (Glow) entfernt */
         }
         
         h1, h2, h3, .font-display {
@@ -138,90 +139,113 @@
         }
         
         /* Animation für die gezogene Zahl */
-        @keyframes popIn {
-            0% { transform: scale(0.5); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
+        @keyframes popOutAndUp {
+            0% { 
+                transform: translateY(200px) scale(0.3); /* Startet von unten (wo Geschenk war) */
+                opacity: 0; 
+            }
+            60% { 
+                transform: translateY(0) scale(1.1); /* Bewegt sich nach oben und vergrößert sich */
+                opacity: 1; 
+            }
+            100% { 
+                transform: translateY(0) scale(1); /* Setzt sich in die Endposition */
+                opacity: 1; 
+            }
         }
-        #numberDisplay.pop-in {
-            animation: popIn 0.5s ease-out forwards;
-        }
-        
-        /* --- START: Geschenk-Animation --- */
-        .gift-container {
-            width: 150px;
-            height: 170px; /* Höhe für Box + Klick-Hinweis */
-            position: relative;
-        }
-        .gift {
-            width: 150px;
-            height: 130px;
-            position: relative;
-        }
-        .gift-lid {
-            width: 160px; /* Etwas breiter als die Box */
-            height: 40px;
-            background-color: var(--gift-lid-color); 
-            border: 3px solid var(--gift-border-color);
-            border-radius: 8px;
-            position: absolute;
-            top: 0;
-            left: -5px; /* Zentriert über der Box */
-            z-index: 10;
-            transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.5s ease;
-        }
-        .gift-box {
-            width: 150px;
-            height: 90px;
-            background-color: var(--gift-box-color);
-            border: 3px solid var(--gift-border-color);
-            border-top: none;
-            border-radius: 8px;
-            position: absolute;
-            bottom: 0;
-            left: 0;
+        #result.pop-out {
+            /* Container wird animiert, nicht nur die Zahl */
+            animation: popOutAndUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
 
-        /* Schleifen (Bows) */
-        .bow-v { /* Vertical ribbon */
-            position: absolute;
-            width: 25px;
-            height: 100%;
-            background-color: var(--gift-bow-color);
-            border-left: 3px solid var(--gift-border-color);
-            border-right: 3px solid var(--gift-border-color);
-            left: 50%;
-            transform: translateX(-50%);
+        
+        /* --- START: 3D Geschenk-Animation --- */
+        .gift-container {
+            width: 150px;
+            height: 180px; /* Mehr Platz für Klick-Hinweis */
+            position: relative;
+            perspective: 800px;
         }
-        .gift-lid .bow-h { /* Horizontal ribbon on lid */
-            position: absolute;
-            width: 100%;
-            height: 25px;
-            background-color: var(--gift-bow-color);
-            border-top: 3px solid var(--gift-border-color);
-            border-bottom: 3px solid var(--gift-border-color);
-            top: 50%;
-            transform: translateY(-50%);
+        
+        .gift {
+            width: 120px;
+            height: 120px;
+            position: relative;
+            transform-style: preserve-3d;
+            transform: rotateX(-10deg) rotateY(30deg); /* Isometrische Ansicht */
+            transition: transform 0.5s ease;
+            cursor: pointer;
         }
-        /* Schleife (Knoten) */
-        .gift-lid .bow-v::before {
-            content: '';
+        .gift-container:hover .gift {
+             transform: rotateX(-10deg) rotateY(30deg) scale(1.05);
+        }
+
+        .gift-side {
             position: absolute;
-            width: 40px;
-            height: 40px;
-            border: 6px solid var(--gift-bow-color);
-            border-radius: 50%;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 0 0 3px var(--gift-border-color);
+            width: 120px;
+            height: 120px;
+            background-color: var(--gift-box-color);
+            border: 2px solid var(--text-primary);
+            box-shadow: inset 0 0 10px var(--gift-shadow-color);
+        }
+        
+        /* Box-Seiten */
+        .gift-box-front { transform: translateZ(60px); }
+        .gift-box-back { transform: translateZ(-60px) rotateY(180deg); }
+        .gift-box-left { transform: rotateY(-90deg) translateZ(60px); }
+        .gift-box-right { transform: rotateY(90deg) translateZ(60px); }
+        .gift-box-bottom { background-color: var(--gift-shadow-color); transform: rotateX(-90deg) translateZ(60px); }
+        
+        /* Deckel */
+        .gift-lid {
+            position: absolute;
+            width: 130px; /* Etwas größer als Box */
+            height: 130px;
+            top: -65px; /* Hälfte der Deckelhöhe */
+            left: -5px; /* Zentriert */
+            transform-style: preserve-3d;
+            z-index: 10;
+            transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+        .gift-lid-side {
+            position: absolute;
+            width: 130px;
+            height: 30px; /* Höhe des Deckelrands */
             background-color: var(--gift-lid-color);
-            z-index: 1;
+            border: 2px solid var(--text-primary);
         }
+        .gift-lid-top {
+            position: absolute;
+            width: 130px;
+            height: 130px;
+            background-color: var(--gift-lid-color);
+            border: 2px solid var(--text-primary);
+            transform: rotateX(90deg) translateZ(15px); /* Deckel obendrauf */
+            box-shadow: inset 0 0 10px var(--gift-highlight-color);
+        }
+        .gift-lid-front { transform: translateZ(65px); }
+        .gift-lid-back { transform: translateZ(-65px) rotateY(180deg); }
+        .gift-lid-left { transform: rotateY(-90deg) translateZ(65px); }
+        .gift-lid-right { transform: rotateY(90deg) translateZ(65px); }
+        
+        /* Schleifen */
+        .bow {
+            position: absolute;
+            background-color: var(--gift-bow-color);
+            border: 2px solid var(--text-primary);
+        }
+        /* Vertikale Schleife */
+        .bow-v-box { width: 30px; height: 100%; top: 0; left: 45px; transform: translateZ(61px); } /* Vorne */
+        .bow-v-left { width: 30px; height: 100%; top: 0; left: 45px; transform: rotateY(-90deg) translateZ(61px); } /* Links */
+        /* Horizontale Schleife (Deckel) */
+        .bow-h-top { width: 100%; height: 30px; top: 50px; left: 0; transform: rotateX(90deg) translateZ(16px); } /* Oben */
+        .bow-h-front { width: 100%; height: 30px; top: 0px; left: 0; transform: translateZ(66px); } /* Vorne (Deckel) */
+        .bow-h-left { width: 100%; height: 30px; top: 0px; left: 0; transform: rotateY(-90deg) translateZ(66px); } /* Links (Deckel) */
         
         /* Klick-Hinweis */
         .click-hint {
             position: absolute;
-            bottom: -35px; /* Unter der Box */
+            bottom: -5px; /* Unter der Box, weiter unten */
             width: 100%;
             text-align: center;
             color: var(--text-secondary);
@@ -240,24 +264,18 @@
         
         /* Öffnen-Animation */
         .gift-container.open .gift-lid {
-            transform: translateY(-120px) rotate(15deg) scale(0.9);
+            transform: translateY(-120px) rotateY(30deg) rotateX(30deg);
+        }
+        .gift-container.open .gift {
+            /* Box fällt leicht zusammen */
+            transform: rotateX(0deg) rotateY(0deg) scale(0.8);
             opacity: 0;
+            transition: transform 0.5s ease, opacity 0.5s ease;
         }
         .gift-container.open .click-hint {
             opacity: 0;
         }
-        
-        /* Deaktivierter Zustand (wird nicht verwendet, aber nützlich) */
-        .gift-container.disabled {
-            cursor: not-allowed;
-            filter: saturate(0.5);
-            opacity: 0.7;
-        }
-        .gift-container.disabled .gift-lid {
-            transform: translateY(-120px) rotate(15deg) scale(0.9);
-            opacity: 0;
-        }
-        /* --- END: Geschenk-Animation --- */
+        /* --- END: 3D Geschenk-Animation --- */
 
     </style>
 </head>
@@ -291,44 +309,65 @@
             
             <h1 class="font-display text-4xl md:text-5xl font-bold mb-3 shimmer-h1">Wichtel-Lotterie</h1>
             <p class="text-lg mb-8" style="color: var(--text-secondary);">Ziehe deine einzigartige Nummer von 1 bis 63.</p>
+            
+            <!-- Container für dynamische Inhalte (Geschenk, Lader, Ergebnis) -->
+            <div class="h-48 flex justify-center items-center relative">
 
-            <!-- Lade-Spinner (standardmäßig versteckt) -->
-            <div id="loading" class="hidden my-8 flex justify-center">
-                <span class="loader"></span>
-                <p class="sr-only">Laden...</p>
-            </div>
+                <!-- Lade-Spinner (standardmäßig versteckt) -->
+                <div id="loading" class="hidden my-8 flex justify-center">
+                    <span class="loader"></span>
+                    <p class="sr-only">Laden...</p>
+                </div>
 
-            <!-- Ergebnis-Anzeige (standardmäßig versteckt) -->
-            <div id="result" class="hidden my-8">
-                <p class="text-lg" style="color: var(--text-secondary);">Deine gezogene Wichtel-Nummer ist:</p>
-                <p id="numberDisplay" class="text-7xl font-extrabold my-4" style="color: var(--accent-color);">--</p>
-                <p class="text-sm" style="color: var(--text-secondary);">Bitte merke dir diese Nummer gut!</p>
-            </div>
+                <!-- Ergebnis-Anzeige (standardmäßig versteckt) -->
+                <div id="result" class="hidden my-8">
+                    <p class="text-lg" style="color: var(--text-secondary);">Deine gezogene Wichtel-Nummer ist:</p>
+                    <p id="numberDisplay" class="text-7xl font-extrabold my-4" style="color: var(--accent-color);">--</p>
+                    <p class="text-sm" style="color: var(--text-secondary);">Bitte merke dir diese Nummer gut!</p>
+                </div>
 
-            <!-- Fehler-Anzeige (standardmäßig versteckt) -->
-            <div id="error" class="hidden my-8 p-4 error-message rounded-lg">
-                <p id="errorMessage"></p>
-            </div>
+                <!-- Fehler-Anzeige (standardmäßig versteckt) -->
+                <div id="error" class="hidden my-8 p-4 error-message rounded-lg">
+                    <p id="errorMessage"></p>
+                </div>
 
-            <!-- Animiertes Geschenk (ersetzt den Button) -->
-            <div id="drawGiftContainer" class="gift-container cursor-pointer mx-auto hidden" role="button" aria-label="Nummer ziehen">
-                <div class="gift">
-                    <div class="gift-lid">
-                        <!-- Deckel-Schleife -->
-                        <div class="bow-v"></div>
-                        <div class="bow-h"></div>
+                <!-- Animiertes 3D-Geschenk (ersetzt den Button) -->
+                <div id="drawGiftContainer" class="gift-container hidden" role="button" aria-label="Nummer ziehen">
+                    <div class="gift">
+                        <!-- Deckel -->
+                        <div class="gift-lid">
+                            <div class="gift-lid-top">
+                                <div class="bow bow-h-top"></div>
+                            </div>
+                            <div class="gift-lid-side gift-lid-front">
+                                <div class="bow bow-h-front"></div>
+                            </div>
+                            <div class="gift-lid-side gift-lid-back"></div>
+                            <div class="gift-lid-side gift-lid-left">
+                                <div class="bow bow-h-left"></div>
+                            </div>
+                            <div class="gift-lid-side gift-lid-right"></div>
+                        </div>
+                        
+                        <!-- Box -->
+                        <div class="gift-side gift-box-front">
+                            <div class="bow bow-v-box"></div>
+                        </div>
+                        <div class="gift-side gift-box-back"></div>
+                        <div class="gift-side gift-box-left">
+                             <div class="bow bow-v-left"></div>
+                        </div>
+                        <div class="gift-side gift-box-right"></div>
+                        <div class="gift-side gift-box-bottom"></div>
                     </div>
-                    <div class="gift-box">
-                        <!-- Box-Schleife -->
-                        <div class="bow-v"></div>
-                    </div>
-                    <!-- "Klicken" Text -->
+                    
+                    <!-- "Klicken" Text (weiter unten) -->
                     <div class="click-hint">
                         <i data-lucide="hand-metal" class="w-5 h-5"></i>
                         <span>Klicken zum Öffnen</span>
                     </div>
                 </div>
-            </div>
+            </div> <!-- Ende dynamischer Container -->
             
             <!-- Admin-Bereich (Neues Design) - ID 'adminSection' hinzugefügt -->
             <div id="adminSection" class="mt-10 pt-6 border-t hidden" style="border-color: var(--border-color);">
@@ -449,7 +488,7 @@
                     drawNumber(); // Die eigentliche Firebase-Funktion
                 }, 500); // Kurze Pause, damit der Spinner sichtbar ist
                 
-            }, 600); // Muss zur CSS-Animationsdauer passen (0.5s) + Puffer
+            }, 600); // Muss zur CSS-Animationsdauer passen (0.6s)
         }
 
 
@@ -581,7 +620,7 @@
         function showResult(number, animate = false) {
             numberDisplay.textContent = number;
             if(animate) {
-                numberDisplay.classList.add('pop-in');
+                resultDiv.classList.add('pop-out'); // NEUE Animation "popOutAndUp"
             }
             resultDiv.classList.remove('hidden');
             drawGiftContainer.classList.add('hidden'); // Geschenk bei Ergebnis ausblenden
