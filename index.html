@@ -30,6 +30,7 @@
             --error-bg-color: rgba(248, 113, 113, 0.1);
             --shadow-color: rgba(0, 0, 0, 0.2);
             --icon-color: #94a3b8;
+            --glow-color: rgba(34, 197, 94, 0.3); /* Sanfter grüner Glow */
         }
 
         /* BASE & FONTS */
@@ -40,7 +41,7 @@
             overflow: hidden; /* Verhindert Scrollbalken durch Animationen */
              /* DEIN NEUER SCHNEE-HINTERGRUND (radial-gradient) */
             background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
-            /* Filter (Glow) ENTFERNT */
+            /* Filter (Glow) von hier ENTFERNT */
         }
         
         h1, h2, h3, .font-display {
@@ -69,6 +70,12 @@
 
 
         /* CARD & LAYOUT */
+        /* Glow-Effekt HIERHER verschoben, nur auf den Main-Container */
+        #app-container {
+             filter: drop-shadow(0 0 15px var(--glow-color));
+             transition: filter 0.5s ease;
+        }
+        
         .glass-card {
             background-color: var(--card-bg-color);
             backdrop-filter: blur(20px);
@@ -198,7 +205,7 @@
         <!-- Schneeflocken werden hier von JS eingefügt -->
     </div>
 
-    <!-- Header with Buttons -->
+    <!-- Header with Buttons (Ohne Glow) -->
     <header class="fixed top-4 left-4 right-4 z-50 flex items-center justify-between">
         <!-- Left Side: Empty or Placeholder -->
         <div></div>
@@ -213,7 +220,7 @@
         </div>
     </header>
     
-    <!-- Main Container -->
+    <!-- Main Container (Trägt jetzt den Glow-Effekt) -->
     <main id="app-container" class="w-full max-w-md relative">
         
         <!-- Glass Card für Wichtel-Lotterie -->
