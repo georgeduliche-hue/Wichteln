@@ -263,8 +263,8 @@
                 Jetzt meine Nummer ziehen!
             </button>
             
-            <!-- Admin-Bereich (Neues Design) - HIER IST DIE ÄNDERUNG: 'hidden' hinzugefügt -->
-            <div class="mt-10 pt-6 border-t hidden" style="border-color: var(--border-color);">
+            <!-- Admin-Bereich (Neues Design) - ID 'adminSection' hinzugefügt -->
+            <div id="adminSection" class="mt-10 pt-6 border-t hidden" style="border-color: var(--border-color);">
                 <p class="text-xs" style="color: var(--text-secondary);">Nur für Admins:</p>
                 <button id="initButton" class="secondary-btn mt-2 text-xs px-3 py-1 rounded-md">
                     Lotterie Initialisieren / Zurücksetzen
@@ -554,11 +554,22 @@
             }
         });
 
+        // --- Admin Sektion per URL-Parameter einblenden ---
+        function checkAdminMode() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('admin') === '1') {
+                const adminSection = document.getElementById('adminSection');
+                if (adminSection) {
+                    adminSection.classList.remove('hidden');
+                }
+            }
+        }
+        checkAdminMode();
+
         // Start der Wichtel-Anwendung
         main();
 
     </script>
 </body>
 </html>
-
 
