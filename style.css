@@ -75,7 +75,7 @@ h1, h2, h3, .font-display {
     color: var(--text-primary);
 }
 
-/* Button-Stil */
+/* Button-Stil (Pulsierend) */
 .main-btn {
     background-color: var(--accent-color);
     color: white;
@@ -176,4 +176,29 @@ h1, h2, h3, .font-display {
     /* Container wird animiert, nicht nur die Zahl */
     animation: popOutAndUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
-/* KORREKTUR: Extra '}' entfernt */
+
+/* --- NEU: Gender Selection Styles (vom Berichtsheft) --- */
+.gender-btn {
+    border: 2px solid var(--border-color);
+    transition: all 0.3s ease;
+    background-color: rgba(255, 255, 255, 0.05); /* Leichter bg für dark mode */
+}
+.gender-btn:hover {
+    border-color: var(--accent-color);
+    transform: translateY(-4px);
+    background-color: rgba(34, 197, 94, 0.1); /* Akzent-Hover-BG */
+}
+.gender-btn.active {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px -2px rgba(34, 197, 94, 0.3);
+}
+/* Stellt sicher, dass der Text im Button die primäre Textfarbe hat, wenn nicht aktiv */
+.gender-btn span {
+     color: var(--text-primary);
+}
+/* Erzwingt weißen Text, wenn der Button aktiv ist */
+.gender-btn.active span {
+    color: white; 
+}
