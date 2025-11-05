@@ -17,10 +17,8 @@
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
     
-    <!-- Schneefall-Container -->
     <div id="snow-container"></div>
 
-    <!-- Header -->
     <header class="fixed top-4 left-4 right-4 z-50 flex items-center justify-between">
         <div></div>
         <div class="flex items-center gap-4">
@@ -30,73 +28,57 @@
         </div>
     </header>
     
-    <!-- Haupt-App-Container -->
     <main id="app-container" class="w-full max-w-md relative">
         
-        <div class="glass-card rounded-2xl w-full p-8 md:p-12 text-center">
+        <div class="glass-card rounded-2xl w-full p-6 md:p-10 text-center">
             
-            <div class="w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-600 text-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-green-500/30">
-                <i data-lucide="gift" class="w-8 h-8"></i>
+            <div class="w-14 h-14 bg-gradient-to-br from-green-400 to-emerald-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-green-500/30">
+                <i data-lucide="gift" class="w-7 h-7"></i>
             </div>
             
-            <h1 class="font-display text-4xl md:text-5xl font-bold mb-3 shimmer-h1">Wichteln 2025</h1>
-            <p class="text-lg mb-8" style="color: var(--text-secondary);">Ziehe deine einzigartige Geschenke-Nummer.</p>
+            <h1 class="font-display text-3xl md:text-5xl font-bold mb-2 shimmer-h1">Wichteln 2025</h1>
+            <p class="text-base mb-6" style="color: var(--text-secondary);">Ziehe deine einzigartige Geschenke-Nummer.</p>
             
-            <!-- Dynamischer Inhaltsbereich -->
-            <div class="min-h-[12rem] flex flex-col justify-center items-center relative">
+            <div class="min-h-[10rem] flex flex-col justify-center items-center relative">
 
-                <!-- Lade-Spinner -->
-                <div id="loading" class="hidden my-8 flex justify-center">
+                <div id="loading" class="hidden my-6 flex justify-center">
                     <span class="loader"></span>
                     <p class="sr-only">Laden...</p>
                 </div>
 
-                <!-- Ergebnis-Anzeige -->
-                <div id="result" class="hidden my-8">
-                    <p id="resultIntroText" class="text-lg" style="color: var(--text-secondary);">Deine gezogene Wichtel-Nummer ist:</p>
-                    <p id="numberDisplay" class="text-7xl font-extrabold my-4" style="color: var(--accent-color); text-shadow: 0 0 15px var(--glow-color);">--</p>
+                <div id="result" class="hidden my-6">
+                    <p id="resultIntroText" class="text-base" style="color: var(--text-secondary);">Deine gezogene Wichtel-Nummer ist:</p>
+                    <p id="numberDisplay" class="text-6xl md:text-7xl font-extrabold my-2" style="color: var(--accent-color); text-shadow: 0 0 15px var(--glow-color);">--</p>
                     <p class="text-sm" style="color: var(--text-secondary);">Bitte merke dir diese Nummer gut!</p>
                 </div>
 
-                <!-- Fehler-Anzeige -->
-                <div id="error" class="hidden my-8 p-4 error-message rounded-lg">
+                <div id="error" class="hidden my-6 p-4 error-message rounded-lg">
                     <p id="errorMessage"></p>
                 </div>
 
-                <!-- 
-                  NEU: Gender Selection Step (ersetzt die alten Buttons)
-                  Dieser Container wird per JS ein- und ausgeblendet.
-                -->
                 <div id="genderSelection" class="hidden w-full flex flex-col gap-4">
                     <h3 class="text-lg font-semibold mb-2">Für wen ziehst du?</h3>
                     
-                    <!-- Neue Gender-Buttons -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        <button id="btn-male" data-gender="male" class="gender-btn p-6 rounded-xl flex flex-col items-center gap-3">
-                            <!-- Placeholder-Bild für Männlich -->
-                            <img src="mann.png" alt="Männlich" class="h-14 w-14 object-cover rounded-full mb-2">
-                            <span class="font-semibold text-lg">Männlich</span>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <button id="btn-male" data-gender="male" class="gender-btn p-4 rounded-xl flex flex-col items-center gap-2">
+                            <img src="mann.png" alt="Männlich" class="h-12 w-12 object-cover rounded-full mb-1">
+                            <span class="font-semibold text-base">Männlich</span>
                         </button>
-                        <button id="btn-female" data-gender="female" class="gender-btn p-6 rounded-xl flex flex-col items-center gap-3">
-                            <!-- Placeholder-Bild für Weiblich -->
-                            <img src="frau.png" alt="Weiblich" class="h-14 w-14 object-cover rounded-full mb-2">
-                            <span class="font-semibold text-lg">Weiblich</span>
+                        <button id="btn-female" data-gender="female" class="gender-btn p-4 rounded-xl flex flex-col items-center gap-2">
+                            <img src="frau.png" alt="Weiblich" class="h-12 w-12 object-cover rounded-full mb-1">
+                            <span class="font-semibold text-base">Weiblich</span>
                         </button>
                     </div>
                 
-                    <!-- NEU: "Nummer ziehen"-Button (anfangs versteckt) -->
-                    <div id="drawButtonContainer" class="hidden w-full mt-6">
-                        <button id="drawNumberButton" class="main-btn w-full text-white font-bold py-3 px-6 rounded-lg shadow-md transition-colors duration-200 text-lg focus:outline-none focus:ring-2 focus:ring-opacity-50 flex items-center justify-center">
+                    <div id="drawButtonContainer" class="hidden w-full mt-4">
+                        <button id="drawNumberButton" class="main-btn w-full text-white font-bold py-3 px-6 rounded-lg shadow-md transition-colors duration-200 text-base focus:outline-none focus:ring-2 focus:ring-opacity-50 flex items-center justify-center">
                             <i data-lucide="gift" class="w-5 h-5 -mt-px mr-2"></i>
                             Nummer ziehen
                         </button>
                     </div>
                 </div>
                 
-            </div> <!-- Ende dynamischer Inhalt -->
-            
-            <!-- Admin Sektion (unverändert) -->
-            <div id="adminSection" class="mt-10 pt-6 border-t hidden" style="border-color: var(--border-color);">
+            </div> <div id="adminSection" class="mt-8 pt-4 border-t hidden" style="border-color: var(--border-color);">
                 <p class="text-xs" style="color: var(--text-secondary);">Nur für Admins:</p>
                 <button id="initButton" class="secondary-btn mt-2 text-xs px-3 py-1 rounded-md">
                     Lotterie Initialisieren / Zurücksetzen
