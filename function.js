@@ -34,17 +34,25 @@ const resultDiv = document.getElementById('result');
 const errorDiv = document.getElementById('error');
 const numberDisplay = document.getElementById('numberDisplay');
 const errorMessage = document.getElementById('errorMessage');
-const drawButton = document.getElementById('drawButton'); // Geändert
 const initButton = document.getElementById('initButton');
 const adminSection = document.getElementById('adminSection');
+// NEUE UI-Elemente
+const genderSelectionDiv = document.getElementById('genderSelection');
+const drawMaleButton = document.getElementById('drawMaleButton');
+const drawFemaleButton = document.getElementById('drawFemaleButton');
+const resultIntroText = document.getElementById('resultIntroText'); // NEU
 
 let db, auth;
 let userId;
 let initClickCount = 0; // Für Admin-Doppelklick-Bestätigung
 
 // --- Datenbank-Pfade (NEUE SKALIERBARE STRUKTUR) ---
-const NUMBERS_COLLECTION_REF = () => collection(db, 'wichtelNumbers');
-const MAX_NUMBER = 63; // Maximale Anzahl an Nummern (1 bis 63)
+// GETRENNTE POOLS
+const MAX_NUMBER_MALE = 22;
+const MAX_NUMBER_FEMALE = 31;
+const NUMBERS_COLLECTION_REF_MALE = () => collection(db, 'wichtelNumbers_male');
+const NUMBERS_COLLECTION_REF_FEMALE = () => collection(db, 'wichtelNumbers_female');
+
 
 /**
  * Hauptfunktion: Initialisiert Firebase und prüft den Status des Benutzers.
@@ -83,7 +91,9 @@ async function main() {
         });
 
         // Event Listeners für die Buttons
-        drawButton.addEventListener('click', drawNumber); // Geändert
+        // GEÄNDERT: Listener für die neuen Buttons
+        drawMaleButton.addEventListener('click', () => drawNumber('male'));
+        drawFemaleButton.addEventListener('click', () => drawNumber('female'));
         initButton.addEventListener('click', initializeLottery);
 
     } catch (err) {
@@ -96,36 +106,61 @@ async function main() {
  * Prüft, ob der Benutzer bereits eine Nummer im lokalen Speicher hat.
  */
 function checkLocalStorage() {
-    const storedNumber = localStorage.getItem(`wichtelNummer_${appId}`);
-    if (storedNumber) {
-        showResult(storedNumber); // Versteckt automatisch den Button
+    // GEÄNDERT: Wir speichern jetzt ein Objekt statt nur die Nummer
+    const storedDataRaw = localStorage.getItem(`wichtelNummer_${appId}`);
+    if (storedDataRaw) {
+        try {
+            const storedData = JSON.parse(storedDataRaw);
+            if (storedData.number && storedData.gender) {
+                showResult(storedData.number, false, storedData.gender); // Versteckt automatisch die Buttons
+            } else {
+                // Alter oder ungültiger Speicher, löschen und Auswahl anzeigen
+                localStorage.removeItem(`wichtelNummer_${appId}`);
+                genderSelectionDiv.classList.remove('hidden'); // Zeigt Geschlechts-Auswahl
+            }
+        } catch (e) {
+            // Fehler beim Parsen, löschen und Auswahl anzeigen
+            localStorage.removeItem(`wichtelNummer_${appId}`);
+            genderSelectionDiv.classList.remove('hidden'); // Zeigt Geschlechts-Auswahl
+        }
     } else {
-        drawButton.classList.remove('hidden'); // Zeigt den Button
+        genderSelectionDiv.classList.remove('hidden'); // Zeigt Geschlechts-Auswahl
     }
 }
 
 /**
  * (NEU) Startet den Zieh-Vorgang (Skalierbare Sharding-Methode).
+ * @param {'male' | 'female'} gender Das ausgewählte Geschlecht
  */
-async function drawNumber() {
+async function drawNumber(gender) {
     if (!db || !userId) {
         showError("Datenbank ist nicht verbunden oder Benutzer nicht angemeldet.");
         return;
     }
+    if (!gender) {
+        showError("Fehler: Kein Geschlecht ausgewählt.");
+        return;
+    }
+
     setLoading(true);
+
+    // Wähle die richtige Sammlung und Text basierend auf dem Geschlecht
+    const numbersCollection = (gender === 'male') 
+        ? NUMBERS_COLLECTION_REF_MALE() 
+        : NUMBERS_COLLECTION_REF_FEMALE();
+    
+    const genderText = (gender === 'male') ? "Jungs" : "Mädels";
 
     try {
         // 1. Finde ALLE freien Nummern (nur Lesezugriff, kein Hotspot)
-        const numbersCollection = NUMBERS_COLLECTION_REF();
         const q = query(numbersCollection, where("drawn", "==", false));
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
-            throw new Error("Alle Nummern sind bereits vergeben!");
+            throw new Error(`Alle Nummern für ${genderText} sind bereits vergeben!`);
         }
 
         // 2. Mische die verfügbaren Dokumente lokal
-        // Wichtig, damit nicht alle 63 User das gleiche Dokument probieren
         const availableDocs = querySnapshot.docs;
         availableDocs.sort(() => Math.random() - 0.5);
 
@@ -135,13 +170,10 @@ async function drawNumber() {
         for (const docSnap of availableDocs) {
             try {
                 // Wir verwenden eine Transaktion, um *dieses eine Dokument* zu beanspruchen
-                // Dies ist ein minimaler Schreibzugriff und erzeugt keinen Hotspot.
                 await runTransaction(db, async (transaction) => {
                     const freshDoc = await transaction.get(docSnap.ref);
                     
                     if (freshDoc.data().drawn === true) {
-                        // Jemand war schneller bei DIESER Nummer.
-                        // Wir werfen einen Fehler, damit die Schleife die nächste Nr. probiert.
                         throw new Error("Nummer bereits vergeben, probiere nächste.");
                     }
                     
@@ -154,26 +186,25 @@ async function drawNumber() {
                     drawnNumber = freshDoc.data().number;
                 });
 
-                // Wenn die Transaktion erfolgreich war, haben wir eine Nummer
                 if (drawnNumber) {
                     break; // Verlasse die for-Schleife
                 }
 
             } catch (transactionError) {
-                // Diese Transaktion ist fehlgeschlagen (Kollision bei DIESER Nummer)
-                // Das ist OK. Die Schleife wird automatisch die nächste versuchen.
-                console.warn(`Kollision bei Nummer ${docSnap.id}, probiere nächste.`);
+                console.warn(`Kollision bei Nummer ${docSnap.id} (Gruppe: ${gender}), probiere nächste.`);
             }
         } // Ende der for-Schleife
 
         if (drawnNumber) {
             // Erfolg!
             setLoading(false);
-            showResult(drawnNumber, true); // true für Animation
-            localStorage.setItem(`wichtelNummer_${appId}`, drawnNumber);
+            showResult(drawnNumber, true, gender); // true für Animation, Geschlecht übergeben
+            
+            // GEÄNDERT: Speichere Objekt mit Nummer UND Geschlecht
+            const dataToStore = { number: drawnNumber, gender: gender };
+            localStorage.setItem(`wichtelNummer_${appId}`, JSON.stringify(dataToStore));
+
         } else {
-            // Sollte nur passieren, wenn alle Nummern vergeben sind,
-            // während wir in der Schleife waren.
             throw new Error("Konnte keine freie Nummer finden (evtl. alle vergeben).");
         }
 
@@ -181,7 +212,7 @@ async function drawNumber() {
         console.error("Fehler beim Ziehen:", err);
         setLoading(false);
         if (err.message.includes("Alle Nummern")) {
-            showError("Leider zu spät! Alle Wichtel-Nummern wurden bereits gezogen.");
+            showError(`Leider zu spät! ${err.message}`);
         } else {
             showError("Ein Fehler ist aufgetreten. Bitte versuche es erneut.");
         }
@@ -191,7 +222,7 @@ async function drawNumber() {
 
 /**
  * (NEU - Admin-Funktion) Initialisiert die Lotterie.
- * Erstellt 63 einzelne Dokumente.
+ * Erstellt 22 (m) + 31 (w) einzelne Dokumente in getrennten Sammlungen.
  */
 async function initializeLottery() {
     if (!db) {
@@ -199,44 +230,44 @@ async function initializeLottery() {
         return;
     }
     
-    // Doppelklick-Bestätigung statt window.confirm()
+    // Doppelklick-Bestätigung
     if (initClickCount === 0) {
-        showError("Admin: Nochmal klicken, um die Lotterie unwiderruflich zurückzusetzen!");
+        showError("Admin: Nochmal klicken, um die Lotterie (M+W) unwiderruflich zurückzusetzen!");
         initClickCount++;
-        // Timer, um den Klick-Zähler zurückzusetzen
         setTimeout(() => { initClickCount = 0; }, 3000);
         return;
     }
     
-    // Zweiter Klick (Bestätigung)
     initClickCount = 0;
     setLoading(true);
 
     try {
-        // (NEU) Wir verwenden einen Batch Write für Effizienz
-        const batch = writeBatch(db);
-        const numbersCollection = NUMBERS_COLLECTION_REF();
-
-        // Erstellt 63 Dokumente (1 bis MAX_NUMBER)
-        for (let i = 1; i <= MAX_NUMBER; i++) {
-            const numDocRef = doc(numbersCollection, String(i)); // ID '1', '2', ...
-            const data = {
-                number: i,
-                drawn: false,
-                drawnBy: null
-            };
-            batch.set(numDocRef, data);
+        // --- BATCH 1: MÄNNLICH (22) ---
+        const batchMale = writeBatch(db);
+        const numbersCollectionMale = NUMBERS_COLLECTION_REF_MALE();
+        for (let i = 1; i <= MAX_NUMBER_MALE; i++) {
+            const numDocRef = doc(numbersCollectionMale, String(i)); // ID '1', '2', ...
+            batchMale.set(numDocRef, { number: i, drawn: false, drawnBy: null });
         }
         
-        // (NEU) Führt alle Schreibvorgänge auf einmal aus
-        await batch.commit();
+        // --- BATCH 2: WEIBLICH (31) ---
+        const batchFemale = writeBatch(db);
+        const numbersCollectionFemale = NUMBERS_COLLECTION_REF_FEMALE();
+        for (let i = 1; i <= MAX_NUMBER_FEMALE; i++) {
+            const numDocRef = doc(numbersCollectionFemale, String(i)); // ID '1', '2', ...
+            batchFemale.set(numDocRef, { number: i, drawn: false, drawnBy: null });
+        }
+
+        // Führe beide Batches aus
+        await batchMale.commit();
+        await batchFemale.commit();
 
         // Lokalen Speicher für diesen Benutzer löschen (falls vorhanden)
         localStorage.removeItem(`wichtelNummer_${appId}`);
 
         setLoading(false);
         // Erfolgsmeldung anzeigen, bevor neugeladen wird
-        showError("Lotterie erfolgreich zurückgesetzt! Seite wird neu geladen...");
+        showError("Lotterie (Männlich & Weiblich) erfolgreich zurückgesetzt! Seite wird neu geladen...");
         setTimeout(() => {
             window.location.reload(); // Seite neu laden
         }, 2000);
@@ -253,19 +284,34 @@ async function initializeLottery() {
 
 function setLoading(isLoading) {
     loadingDiv.classList.toggle('hidden', !isLoading);
-    drawButton.classList.toggle('hidden', isLoading); // Button bei Laden ausblenden
+    genderSelectionDiv.classList.toggle('hidden', isLoading); // Auswahl bei Laden ausblenden
     resultDiv.classList.add('hidden');
     errorDiv.classList.add('hidden');
     if(isLoading) initClickCount = 0; // Zähler bei Ladevorgang zurücksetzen
 }
 
-function showResult(number, animate = false) {
+/**
+ * Zeigt das Ergebnis an.
+ * @param {string | number} number Die gezogene Nummer
+ * @param {boolean} [animate=false] Ob animiert werden soll
+ * @param {'male' | 'female'} [gender] Das Geschlecht für den Text
+ */
+function showResult(number, animate = false, gender) {
     numberDisplay.textContent = number;
+    
+    // NEU: Passe den Text basierend auf dem Geschlecht an
+    if (gender) {
+        const genderText = (gender === 'male') ? "Jungs" : "Mädels";
+        resultIntroText.textContent = `Deine gezogene Wichtel-Nummer (Gruppe: ${genderText}) ist:`;
+    } else {
+        resultIntroText.textContent = `Deine gezogene Wichtel-Nummer ist:`;
+    }
+
     if(animate) {
         resultDiv.classList.add('pop-out'); // Animation "popOutAndUp"
     }
     resultDiv.classList.remove('hidden');
-    drawButton.classList.add('hidden'); // Button bei Ergebnis ausblenden
+    genderSelectionDiv.classList.add('hidden'); // Auswahl bei Ergebnis ausblenden
     loadingDiv.classList.add('hidden');
     errorDiv.classList.add('hidden');
 }
@@ -274,15 +320,16 @@ function showResult(number, animate = false) {
 function showError(message) {
     errorMessage.textContent = message;
     errorDiv.classList.remove('hidden');
-    drawButton.classList.add('hidden'); // Button bei Fehler ausblenden
+    genderSelectionDiv.classList.add('hidden'); // Auswahl bei Fehler ausblenden
     loadingDiv.classList.add('hidden');
     resultDiv.classList.add('hidden');
     
-    // Wenn es kein Admin-Reset-Fehler war, Button wieder anzeigen
+    // Wenn es kein Admin-Reset-Fehler war, Auswahl wieder anzeigen
     if (!message.startsWith("Admin:") && !message.includes("erfolgreich zurückgesetzt")) {
          setTimeout(() => {
+             // Prüfe, ob schon gezogen wurde. Nur wenn nicht, zeige Auswahl.
              if (localStorage.getItem(`wichtelNummer_${appId}`) == null) {
-                 drawButton.classList.remove('hidden'); // Button wieder anzeigen
+                 genderSelectionDiv.classList.remove('hidden'); // Auswahl wieder anzeigen
                  errorDiv.classList.add('hidden');
              }
          }, 3000);
@@ -354,7 +401,4 @@ main();
 createSnowfall(); // Schneefall starten
 
 // WICHTIG: lucide.createIcons() muss aufgerufen werden, *nachdem* das HTML geladen wurde.
-// Da dieses Skript am Ende des Body geladen wird, ist das HTML verfügbar.
-// Wenn du das Skript in den <head> verschiebst, musst du 'defer' verwenden oder
-// diesen Aufruf in ein 'DOMContentLoaded'-Event verpacken.
 lucide.createIcons(); // Icons rendern (wichtig für das Geschenk-Icon)
