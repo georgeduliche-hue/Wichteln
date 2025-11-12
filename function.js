@@ -45,7 +45,7 @@ let initClickCount = 0; // Für Admin-Doppelklick-Bestätigung
 let selectedGender = null; // NEU: Status für ausgewähltes Geschlecht
 
 // --- Datenbank-Pfade (unverändert) ---
-const MAX_NUMBER_MALE = 22;
+const MAX_NUMBER_MALE = 21;
 const MAX_NUMBER_FEMALE = 31;
 const NUMBERS_COLLECTION_REF_MALE = () => collection(db, 'wichtelNumbers_male');
 const NUMBERS_COLLECTION_REF_FEMALE = () => collection(db, 'wichtelNumbers_female');
